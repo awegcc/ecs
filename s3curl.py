@@ -6,10 +6,10 @@ import argparse
 
 def main():
     ''' main function '''
-	parser = argparse.ArgumentParser()
-	parser.add_argument("--id", default=sys.argv[0], help="id")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--id", default=sys.argv[0], help="id")
 
-	args = parser.parse_args()
+    args = parser.parse_args()
 
     
 if __name__ == '__main__':
