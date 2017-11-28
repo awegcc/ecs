@@ -157,7 +157,8 @@ dump_chunk_data()
                 rm -f $chunkid/${chunkid}.JRContent.${major}
             fi
         else
-            echo "major not find"
+            echo " !!!!!!----> major not find, timestamp: ${timestamp}"
+            break
         fi
     done
 }
