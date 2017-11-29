@@ -133,7 +133,7 @@ dump_chunk_data()
         then
             startline=0
             curl -s "http://${ipaddr}:9101/journalcontent/${dtId}?zone=${zone}&major=$major" -o $chunkid/${chunkid}.JRContent.${major}
-            eval $(awk -v chunkid="$chunkid" -v cstatus="$search_mode" 'BEGIN{flag=0}/schemaType CHUNK chunkId/,/isEc: false/{if($1=="<schemaKey>schemaType" && $2=="CHUNK" && $4~chunkid){flag=1}else if($1=="<schemaKey>schemaType" && $2=="CHUNK" && $4!~chunkid){flag=0}else if($1=="<value>status:" && $2==cstatus && flag){printf "startline=%d\n",NR;exit}else{next}}' $chunkid/${chunkid}.JRContent.${major})
+            eval $(awk -v beginpat="schemaType CHUNK chunkId $chunkid" -v sstatus="$search_mode" '$0~beginpat, $1~"isEc:"{if($1=="<value>status:" && $2==sstatus){sstat=1}else if($1=="<value>status:"){sstat=0}else if($1=="isEc:" && $2=="false" && sstat==1 ){printf "startline=%d",NR;exit}}' $chunkid/${chunkid}.JRContent.${major})
             if [[ $startline > 0 ]]
             then
                 echo "major     : $major"
