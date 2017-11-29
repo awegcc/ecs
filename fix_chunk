@@ -25,11 +25,11 @@ then
 fi
 
 ipaddr=''
-chunkidfile='chunkid.list'
-search_mode='ACTIVE'
 dump_data='TRUE'
 inject_data='FALSE'
+search_mode='ACTIVE'
 validate_data='FALSE'
+chunkidfile='chunkid.list'
 
 while getopts ':f:h:savi' opt
 do
