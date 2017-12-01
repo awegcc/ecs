@@ -1,10 +1,31 @@
-#! /bin/bash
+#!/bin/bash
+#
+#
 
-datenow=$1
-rg=$2
+print_usage()
+{
+    echo "Usage: $0 rgId [date]"
+    exit 1
+}
 
-viprexec -i -c "zgrep This /var/log/blobsvc-chunk-reclaim.log.2017112* /var/log/blobsvc-chunk-reclaim.log" > roundEnd.log.${datenow}
-viprexec -i -c "zgrep candidateCount /var/log/blobsvc-chunk-reclaim.log.2017112* /var/log/blobsvc-chunk-reclaim.log" > candidateCount.log.${datenow}
+
+if [[ $# == 2 ]]
+then
+    rg=$1
+    datenow=$2
+elif [[ $# == 1 ]]
+then
+    rg=$1
+    datenow=$(date '+%Y%m%d')
+else
+    print_usage
+fi
+
+dump_data=dump_data.${datenow}
+
+#viprexec -i -c "zgrep This /var/log/blobsvc-chunk-reclaim.log.2017{1129,1130,1201}* /var/log/blobsvc-chunk-reclaim.log" > roundEnd.log.${datenow}
+#viprexec -i -c "zgrep candidateCount /var/log/blobsvc-chunk-reclaim.log.2017{1129,1130,1201}* /var/log/blobsvc-chunk-reclaim.log" > candidateCount.log.${datenow}
+viprexec -i -c 'zgrep "This\|candidateCount" /var/log/blobsvc-chunk-reclaim.log.2017{1129,1130,1201}* /var/log/blobsvc-chunk-reclaim.log' > ${dump_data}
 
 for((i=0;i<128;i++))
 do
@@ -17,4 +38,5 @@ do
 done > GCVerificationAnalysis.log.${datenow}.${rg}
 #rm roundEnd.log.${datenow}
 #rm candidateCount.log.${datenow}
+#rm ${dump_data}
 
