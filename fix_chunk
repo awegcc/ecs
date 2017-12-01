@@ -7,13 +7,14 @@ PY_CRC32='crc32.py'
 
 print_usage()
 {
-    echo "$0:"
-    echo " -a       (-d,-v,-i) dump, validate and inject data"
-    echo " -s       Dump first sealed chunk data"
-    echo " -v       Validate dumped chunk data"
-    echo " -i       Inject back chunk data"
-    echo " -h host  Host address"
-    echo " -f file  Chunkid file"
+    base_name=$(basename $0)
+    echo -e "\033[0;31m Usage: \033[0m $base_name [options...]"
+    echo -e " -a       (-d,-v,-i) dump, validate and inject data"
+    echo -e " -s       Dump first sealed chunk data"
+    echo -e " -v       Validate dumped chunk data"
+    echo -e " -i       Inject back chunk data"
+    echo -e " -h host  Host address"
+    echo -e " -f file  Chunkid file"
     exit 1
 }
 
