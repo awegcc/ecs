@@ -4,7 +4,7 @@
 
 print_usage()
 {
-    echo "Usage: $0 rgId [date]"
+    echo "Usage: $0 rgId days"
     exit 1
 }
 
@@ -12,20 +12,33 @@ print_usage()
 if [[ $# == 2 ]]
 then
     rg=$1
-    datenow=$2
+    days=$2
 elif [[ $# == 1 ]]
 then
     rg=$1
-    datenow=$(date '+%Y%m%d')
 else
     print_usage
 fi
 
-dump_data=dump_data.${datenow}
+datelist='{'
+for((i=1;i<=days;i++))
+do
+	day=$(date +',.%Y%m%d*' -d"$i day ago")
+	datelist="$datelist$day"
+	from_day=$(date +'%Y%m%d' -d"$i day ago")
+done
+datelist="${datelist}}"
 
+
+datenow=$(date '+%Y%m%d')
+dump_data=dump_data.${datenow}
+echo "dump log from $from_day to $datenow to $dump_data"
 #viprexec -i -c "zgrep This /var/log/blobsvc-chunk-reclaim.log.2017{1129,1130,1201}* /var/log/blobsvc-chunk-reclaim.log" > roundEnd.log.${datenow}
 #viprexec -i -c "zgrep candidateCount /var/log/blobsvc-chunk-reclaim.log.2017{1129,1130,1201}* /var/log/blobsvc-chunk-reclaim.log" > candidateCount.log.${datenow}
-#viprexec -i -c 'zgrep "This\|candidateCount" /var/log/blobsvc-chunk-reclaim.log.2017{1129,1130,1201}* /var/log/blobsvc-chunk-reclaim.log' > ${dump_data}
+echo viprexec -i -c "zgrep 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist} /var/log/blobsvc-chunk-reclaim.log"
+#viprexec -i -c "zgrep 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist} /var/log/blobsvc-chunk-reclaim.log" > ${dump_data}
+
+exit 0
 zgrep "This" /root/dump_data.dat > roundEnd.log.${datenow}
 zgrep "candidateCount" /root/dump_data.dat > candidateCount.log.${datenow}
 
