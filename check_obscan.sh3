@@ -21,13 +21,17 @@ else
     print_usage
 fi
 
-dump_data=dump_data.${datenow}
+dump_data=dump_raw_data.${datenow}
 zgrep "This\|candidateCount" /root/dump_data.dat > $dump_data
 #viprexec -i -c 'zgrep "This\|candidateCount" /var/log/blobsvc-chunk-reclaim.log.2017{1129,1130,1201}* /var/log/blobsvc-chunk-reclaim.log' > ${dump_data}
+grep "REPO_SCAN" ${dump_data} | grep candidateCount > candateCount.log
+grep "REPO_SCAN" ${dump_data} | grep This > roundEnd.log
 
 for((i=0;i<128;i++))
 do
     ob="OB_${i}_128_0:"
+	grep "${rg}_OB_${i}_128_0" candidateCount.log | grep Saving | tail -n 1 > candateCount.log.${i}
+	grep "${rg}_OB_${i}_128_0" roundEnd.log | grep round | tail -n 1 > roundEnd${i}
     eval $( awk -v urn="${rg}_${ob}" '$2~"REPO_SCAN"{
 								if($7=="Saving" && $11~urn && $12=="candidateCount"){
                                     candidateCount=$13;
