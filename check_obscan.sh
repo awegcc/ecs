@@ -28,11 +28,10 @@ do
 	from_day=$(date +'%Y%m%d' -d"$i day ago")
 done
 datelist="${datelist}}"
-
-
 datenow=$(date '+%Y%m%d')
 dump_data=dump_data.${datenow}
 echo "dump log from $from_day to $datenow to $dump_data"
+
 #viprexec -i -c "zgrep This /var/log/blobsvc-chunk-reclaim.log.2017{1129,1130,1201}* /var/log/blobsvc-chunk-reclaim.log" > roundEnd.log.${datenow}
 #viprexec -i -c "zgrep candidateCount /var/log/blobsvc-chunk-reclaim.log.2017{1129,1130,1201}* /var/log/blobsvc-chunk-reclaim.log" > candidateCount.log.${datenow}
 echo viprexec -i -c "zgrep 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist} /var/log/blobsvc-chunk-reclaim.log"
