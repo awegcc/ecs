@@ -24,8 +24,8 @@ datenow=$(date '+%Y%m%d')
 dump_data=dump_data.${datenow}
 echo "dump log from $from_day to $datenow to $dump_data"
 
-echo viprexec -i -c "zgrep 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist}"
-#viprexec -i -c "zgrep 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
+echo viprexec -i -c "zgrep -h 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist}"
+#viprexec -i -c "zgrep -h 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
 zgrep "This\|candidateCount" /root/dump_data.dat > $dump_data
 
 grep "REPO_SCAN" ${dump_data} | grep candidateCount > candidateCount.log
