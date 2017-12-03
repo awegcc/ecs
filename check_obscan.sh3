@@ -1,13 +1,5 @@
 #!/bin/bash
 #
-#
-print_usage()
-{
-    echo "Usage: $0 rgId days"
-    exit 1
-}
-
-
 if [[ $# == 2 ]]
 then
     rg=$1
@@ -16,7 +8,8 @@ elif [[ $# == 1 ]]
 then
     rg=$1
 else
-    print_usage
+    echo "Usage: $0 rgId days"
+    exit 1
 fi
 
 datelist='{'
@@ -31,42 +24,44 @@ datenow=$(date '+%Y%m%d')
 dump_data=dump_data.${datenow}
 echo "dump log from $from_day to $datenow to $dump_data"
 
+echo viprexec -i -c "zgrep 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist}"
+#viprexec -i -c "zgrep 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
 zgrep "This\|candidateCount" /root/dump_data.dat > $dump_data
-#viprexec -i -c 'zgrep "This\|candidateCount" /var/log/blobsvc-chunk-reclaim.log.2017{1129,1130,1201}* /var/log/blobsvc-chunk-reclaim.log' > ${dump_data}
-grep "REPO_SCAN" ${dump_data} | grep candidateCount > candateCount.log
+
+grep "REPO_SCAN" ${dump_data} | grep candidateCount > candidateCount.log
 grep "REPO_SCAN" ${dump_data} | grep This > roundEnd.log
 
-for((i=0;i<128;i++))
+for((index=0;index<128;index++))
 do
-    ob="OB_${i}_128_0:"
-    grep "${rg}_OB_${i}_128_0" candidateCount.log | grep Saving | tail -n 1 > candateCount.log.${i}
-    grep "${rg}_OB_${i}_128_0" roundEnd.log | grep round | tail -n 1 > roundEnd.${i}
-    eval $( awk '{
-                for(i=1;i<=NF;i++){
-                    if($7=="Saving" && $11~urn && $12=="candidateCount"){
-                    candidateCount=$13;
-                    failedCandidateCount=$15;
-                    lastTaskTime=$17;
+    ob="OB_${index}_128_0:"
+    grep "${rg}_${ob}" candidateCount.log | grep Saving | tail -n 1 > result.log.${index}
+    grep "${rg}_${ob}" roundEnd.log | grep round | tail -n 1 >> result.log.${index}
+    eval $( awk '/ChunkReferenceScanner.java/{
+                    for(i=1;i<=NF;i++){
+                        if($i=="candidateCount"){
+                            candidateCount=$(i+1);
+                        } else if($i=="failedCandidateCount"){
+                            failedCandidateCount=$(i+1);
+                        } else if($i=="lastTaskTime"){
+                            lastTaskTime=$(i+1);
+                        }
                     }
                 }
-            }
+                /RepoChunkReferenceScanner.java/{
+                    for(i=1;i<=NF;i++){
+                        if($i=="milliseconds") {
+                            roundtime=substr($1,index($1,":")+1,19);
+                            duration=$(i-1);
+                        }
+                    }
+                }
             END{
                 printf "candidateCount=%d;failedCandidateCount=%d;lastTaskTime=%d\n",candidateCount,failedCandidateCount,lastTaskTime;
-            }
-        }' candateCount.log.${i} )
-    eval $( awk '{
-            for(i=1;i<=NF;i++){
-                if($8=="This" && $9=="round" && $13~urn){
-                roundtime=substr($1,index($1,":")+1,19);
-                duration=$17;
-                }
-            }
-            END{
                 printf "lastEndtime=%s;lastDuration=%s\n",roundtime,duration;
-            }
-        }' roundEnd.${i} )
+            }' result.log.${index} )
     printf "%13s candidateCount %9s, failedCandidateCount %6s, lastTaskTime %13s, lastEndtime %19s, lastDuration %11s\n"\
            $ob $candidateCount $failedCandidateCount $lastTaskTime $lastEndtime $lastDuration
+    rm -f result.log.${index}
 done > GCVerificationAnalysis.log.${datenow}.${rg}
-#rm ${dump_data}
+rm -f ${dump_data}
 

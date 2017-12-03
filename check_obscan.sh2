@@ -1,14 +1,5 @@
 #!/bin/bash
 #
-#
-
-print_usage()
-{
-    echo "Usage: $0 rgId days"
-    exit 1
-}
-
-
 if [[ $# == 2 ]]
 then
     rg=$1
@@ -17,7 +8,8 @@ elif [[ $# == 1 ]]
 then
     rg=$1
 else
-    print_usage
+    echo "Usage: $0 rgId days"
+    exit 1
 fi
 
 datelist='{'
@@ -34,9 +26,9 @@ echo "dump log from $from_day to $datenow to $dump_data"
 
 zgrep "This\|candidateCount" /root/dump_data.dat | grep REPO_SCAN > $dump_data
 
-for((i=0;i<128;i++))
+for((index=0;index<128;index++))
 do
-    ob="OB_${i}_128_0:"
+    ob="OB_${index}_128_0:"
     eval $( awk -v urn="${rg}_${ob}" '$7=="Saving" && $11~urn && $12=="candidateCount"{
                                         candidateCount=$13;
                                         failedCandidateCount=$15;
@@ -54,5 +46,5 @@ do
     printf "%13s candidateCount %9s, failedCandidateCount %6s, lastTaskTime %13s, lastEndtime %19s, lastDuration %11s\n"\
            $ob $candidateCount $failedCandidateCount $lastTaskTime $lastEndtime $lastDuration
 done > GCVerificationAnalysis.log.${datenow}.${rg}
-#rm ${dump_data}
+rm ${dump_data}
 
