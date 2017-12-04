@@ -50,7 +50,7 @@ do
                 /RepoChunkReferenceScanner.java/{
                     for(i=1;i<=NF;i++){
                         if($i=="milliseconds") {
-                            roundtime=substr($1,index($1,":")+1,19);
+                            roundtime=substr($1,0,19);
                             duration=$(i-1);
                         }
                     }
