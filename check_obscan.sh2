@@ -17,12 +17,10 @@ for((i=1;i<=days;i++))
 do
         day=$(date +',.%Y%m%d*' -d"$i day ago")
         datelist="$datelist$day"
-        from_day=$(date +'%Y%m%d' -d"$i day ago")
 done
 datelist="${datelist}}"
 datenow=$(date '+%Y%m%d')
 dump_data=dump_data.${datenow}
-echo "dump log from $from_day to $datenow to $dump_data"
 
 zgrep "This\|candidateCount" /root/dump_data.dat | grep REPO_SCAN > $dump_data
 

@@ -17,7 +17,6 @@ for((i=days;i>0;i--))
 do
         day=$(date +'.%Y%m%d*,' -d"$i day ago")
         datelist="$datelist$day"
-        from_day=$(date +'%Y%m%d' -d"$i day ago")
 done
 datelist="${datelist}$(date +'.%Y%m%d*,}')"
 datenow=$(date '+%Y%m%d')

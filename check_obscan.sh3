@@ -17,16 +17,13 @@ for((i=days;i>0;i--))
 do
         day=$(date +'.%Y%m%d*,' -d"$i day ago")
         datelist="$datelist$day"
-        from_day=$(date +'%Y%m%d' -d"$i day ago")
 done
 datelist="${datelist}$(date +'.%Y%m%d*,}')"
 datenow=$(date '+%Y%m%d')
 dump_data=dump_data.${datenow}
-echo "dump log from $from_day to $datenow to $dump_data"
 
 echo viprexec -i -c "zgrep -h 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist}"
-#viprexec -i -c "zgrep -h 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
-zgrep "This\|candidateCount" /root/dump_data.dat > $dump_data
+viprexec -i -c "zgrep -h 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
 
 grep "REPO_SCAN" ${dump_data} | grep candidateCount > candidateCount.log
 grep "REPO_SCAN" ${dump_data} | grep This > roundEnd.log
