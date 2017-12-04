@@ -55,10 +55,10 @@ do
                 }
             END{
                 printf "candidateCount=%d;failedCandidateCount=%d;lastTaskTime=%d\n",candidateCount,failedCandidateCount,lastTaskTime;
-                printf "lastEndtime=%s;lastDuration=%s\n",roundtime,duration;
+                printf "lastEndtime=%s;lastDuration=%s;hours=%.2f\n",roundtime,duration,duration/1000/3600;
             }' result.log.${index} )
-    printf "%13s candidateCount %9s, failedCandidateCount %6s, lastTaskTime %13s, lastEndtime %19s, lastDuration %11s\n"\
-           $ob $candidateCount $failedCandidateCount $lastTaskTime $lastEndtime $lastDuration
+    printf "%13s candidateCount %9s, failedCandidateCount %6s, lastTaskTime %13s, lastEndtime %19s, lastDuration %11s (%s h)\n"\
+           $ob $candidateCount $failedCandidateCount $lastTaskTime $lastEndtime $lastDuration $hours
     rm -f result.log.${index}
 done > GCVerificationAnalysis.log.${datenow}.${rg}
 rm -f candidateCount.log
