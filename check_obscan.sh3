@@ -22,17 +22,18 @@ datelist="${datelist}$(date +'.%Y%m%d*,}')"
 datenow=$(date '+%Y%m%d')
 dump_data=dump_data.${datenow}
 
-echo viprexec -i -c "zgrep -h 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist}"
-viprexec -i -c "zgrep -h 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
+echo viprexec -c "zgrep -h 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist}"
+#viprexec -i -c "zgrep -h 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
+viprexec -c "zgrep -h 'candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
 
-grep "REPO_SCAN" ${dump_data} | grep candidateCount > candidateCount.log
-grep "REPO_SCAN" ${dump_data} | grep This > roundEnd.log
+grep "REPO_SCAN" ${dump_data} | grep 'Saving checkpoint' > candidateCount.log
+grep "REPO_SCAN" ${dump_data} | grep 'This round' > roundEnd.log
 
 for((index=0;index<128;index++))
 do
     ob="OB_${index}_128_0:"
-    grep "${rg}_${ob}" candidateCount.log | grep Saving | tail -n 1 > result.log.${index}
-    grep "${rg}_${ob}" roundEnd.log | grep round | tail -n 1 >> result.log.${index}
+    grep "${rg}_${ob}" candidateCount.log | tail -n 1 > result.log.${index}
+    grep "${rg}_${ob}" roundEnd.log | tail -n 1 >> result.log.${index}
     eval $( awk '/ChunkReferenceScanner.java/{
                     for(i=1;i<=NF;i++){
                         if($i=="candidateCount"){
@@ -60,5 +61,7 @@ do
            $ob $candidateCount $failedCandidateCount $lastTaskTime $lastEndtime $lastDuration
     rm -f result.log.${index}
 done > GCVerificationAnalysis.log.${datenow}.${rg}
+rm -f candidateCount.log
+rm -f roundEnd.log
 rm -f ${dump_data}
 
