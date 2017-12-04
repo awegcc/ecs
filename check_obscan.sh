@@ -13,13 +13,13 @@ else
 fi
 
 datelist='{'
-for((i=1;i<=days;i++))
+for((i=days;i>0;i--))
 do
-	day=$(date +',.%Y%m%d*' -d"$i day ago")
-	datelist="$datelist$day"
-	from_day=$(date +'%Y%m%d' -d"$i day ago")
+        day=$(date +'.%Y%m%d*,' -d"$i day ago")
+        datelist="$datelist$day"
+        from_day=$(date +'%Y%m%d' -d"$i day ago")
 done
-datelist="${datelist}}"
+datelist="${datelist}$(date +'.%Y%m%d*,}')"
 datenow=$(date '+%Y%m%d')
 
 echo viprexec -i -c "zgrep 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist}"

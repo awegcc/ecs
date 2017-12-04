@@ -2,12 +2,12 @@
 
 days=$1
 datelist='{'
-for((i=1;i<=days;i++))
+for((i=days;i>0;i--))
 do
-	day=$(date +',.%Y%m%d*' -d"$i day ago")
+	day=$(date +'.%Y%m%d*,' -d"$i day ago")
 	datelist="$datelist$day"
 done
 
-datelist="${datelist}}"
+datelist="${datelist}$(date +'.%Y%m%d*}')"
 
-echo "date list: $datelist"
+echo "$datelist"
