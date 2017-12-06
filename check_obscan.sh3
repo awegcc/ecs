@@ -22,9 +22,8 @@ datelist="${datelist}$(date +'.%Y%m%d*,}')"
 datenow=$(date '+%Y%m%d')
 dump_data=dump_data.${datenow}
 
-echo viprexec -c "zgrep -h 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist}"
-#viprexec -i -c "zgrep -h 'This\|candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
-viprexec -c "zgrep -h 'candidateCount' /var/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
+echo viprexec -c "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}"
+viprexec "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
 
 grep "REPO_SCAN" ${dump_data} | grep 'Saving checkpoint' > candidateCount.log
 grep "REPO_SCAN" ${dump_data} | grep 'This round' > roundEnd.log
