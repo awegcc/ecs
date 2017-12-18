@@ -69,7 +69,7 @@ fi
 
 if [ "x${ip_port}" == "x" ]
 then
-    ip_port=$(netstat -ntpl | awk '/:9101/{print $4}')
+    ip_port=$(netstat -ntl | awk '/:9101/{print $4;exit}')
 fi
 
 if [ ! -s "$PY_CRC32" ]
