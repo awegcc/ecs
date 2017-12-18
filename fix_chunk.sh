@@ -25,7 +25,7 @@ then
     exit 0
 fi
 
-ipaddr=''
+ip_port=''
 dump_data='TRUE'
 inject_data='FALSE'
 search_mode='ACTIVE'
@@ -37,7 +37,7 @@ do
     case $opt in
     f) chunkidfile=$OPTARG
     ;;
-    h) ipaddr=$OPTARG
+    h) ip_port="${OPTARG}:9101"
     ;;
     a)
         dump_data='TRUE'
@@ -67,9 +67,9 @@ then
     print_usage
 fi
 
-if [ "x${ipaddr}" == "x" ]
+if [ "x${ip_port}" == "x" ]
 then
-    ipaddr=$(hostname -i)
+    ip_port=$(netstat -ntpl | awk '/:9101/{print $4}')
 fi
 
 if [ ! -s "$PY_CRC32" ]
@@ -83,10 +83,10 @@ then
     echo '    print "crc32 checksum:", zlib.crc32(f.read(data_length)) & 0xffffffff'
 fi > "$PY_CRC32"
 
-eval $(curl -s "http://${ipaddr}:9101/stats/ssm/varraycapacity/" | awk -F'[<>]' '/VarrayId/{printf "cos=\047%s\047\n",$3}')
+eval $(curl -s "http://${ip_port}/stats/ssm/varraycapacity/" | awk -F'[<>]' '/VarrayId/{printf "cos=\047%s\047\n",$3}')
 if [ "x${cos}" == "x" ]
 then
-    echo "can not get cos of ${ipaddr}"
+    echo "can not get cos of ${ip_port}"
     print_usage
 fi
 
@@ -104,17 +104,17 @@ dump_chunk_data()
     chunkid=$1
     echo "chunkid   : $chunkid"
     mkdir -p $chunkid
-    curl -s "http://${ipaddr}:9101/diagnostic/1/ShowChunkInfo?cos=${cos}&chunkid=${chunkid}" -o $chunkid/${chunkid}.info
+    curl -s "http://${ip_port}/diagnostic/1/ShowChunkInfo?cos=${cos}&chunkid=${chunkid}" -o $chunkid/${chunkid}.info
     # get chunk primary(zone) and sealedTime
     eval $(awk '/primary/{printf "zone=%s\n",$2};/sealedTime:/{printf "sealedTime=\047%s\047\n",$2}' $chunkid/${chunkid}.info)
     echo "zone      : $zone"
     echo "sealedTime: $sealedTime"
     # get chunk dtId
-    curl -s "http://${ipaddr}:9101/diagnostic/CT/1/DumpAllKeys/CHUNK?chunkId=${chunkid}&useStyle=raw" | grep -B1 schemaType > $chunkid/${chunkid}.dtId
+    curl -s "http://${ip_port}/diagnostic/CT/1/DumpAllKeys/CHUNK?chunkId=${chunkid}&useStyle=raw" | grep -B1 schemaType > $chunkid/${chunkid}.dtId
     eval $(awk -F/ '/http/{printf "dtId=\047%s\047\n",$4}' $chunkid/${chunkid}.dtId)
     echo "dtId      : $dtId"
     # List JR(Journal Region)
-    curl -s "http://${ipaddr}:9101/diagnostic/PR/2/DumpAllKeys/DIRECTORYTABLE_RECORD?type=JOURNAL_REGION&dtId=${dtId}&zone=${zone}&useStyle=raw&showvalue=gpb"|grep -B1 schemaType > $chunkid/${chunkid}.JR
+    curl -s "http://${ip_port}/diagnostic/PR/2/DumpAllKeys/DIRECTORYTABLE_RECORD?type=JOURNAL_REGION&dtId=${dtId}&zone=${zone}&useStyle=raw&showvalue=gpb"|grep -B1 schemaType > $chunkid/${chunkid}.JR
     # get JR url
     eval $(awk 'NR==1 && /http/{printf "jr_url=\047%s\047\n",$0}' $chunkid/${chunkid}.JR)
     if [ "x$jr_url" != "x" ]
@@ -133,7 +133,7 @@ dump_chunk_data()
         if [[ "x$major" != "x" ]]
         then
             startline=0
-            curl -s "http://${ipaddr}:9101/journalcontent/${dtId}?zone=${zone}&major=$major" -o $chunkid/${chunkid}.JRContent.${major}
+            curl -s "http://${ip_port}/journalcontent/${dtId}?zone=${zone}&major=$major" -o $chunkid/${chunkid}.JRContent.${major}
             eval $(awk -v beginpat="schemaType CHUNK chunkId $chunkid" -v sstatus="$search_mode" '$0~beginpat, $1~"isEc:"{if($1=="<value>status:" && $2==sstatus){sstat=1}else if($1=="<value>status:"){sstat=0}else if($1=="isEc:" && $2=="false" && sstat==1 ){printf "startline=%d",NR;exit}}' $chunkid/${chunkid}.JRContent.${major})
             if [[ $startline > 0 ]]
             then
@@ -218,8 +218,8 @@ inject_chunk_data()
     index=11
     dd if=${chunk_data} of=/dae/uuid-${partitionId}/${filename} conv=notrunc bs=1 count=11184800 seek=2885678400 skip=33554400
     python "$PY_CRC32" ${chunk_data} 33554400 11184800
-    curl -X PUT "http://${ipaddr}:9101/cm/recover/setSegmentChecksum/${cos}/1/${chunkid}/${index}/${checksum}"
-    curl -X PUT "http://${ipaddr}:9101/cm/recover/removeRecoveryStatus/${cos}/1/${chunkid}/${index}"
+    curl -X PUT "http://${ip_port}/cm/recover/setSegmentChecksum/${cos}/1/${chunkid}/${index}/${checksum}"
+    curl -X PUT "http://${ip_port}/cm/recover/removeRecoveryStatus/${cos}/1/${chunkid}/${index}"
 }
 
 while read -u 99 chunkid
