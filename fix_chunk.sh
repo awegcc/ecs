@@ -124,6 +124,7 @@ dump_chunk_data()
         echo "JR_URL not find"
         return
     fi
+    # Use %$'\r' to strip \r (LF)
     curl -s "${jr_url%$'\r'}" -o $chunkid/${chunkid}.JRDetail
     for ((timestamp=sealedTime-400000000; timestamp<=sealedTime+8000000000; timestamp+=1))
     do
