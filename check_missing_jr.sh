@@ -87,27 +87,27 @@ function scan_missing_jr()
         do
             echo "lastMajor:$lastMajor lastMinor:$lastMinor"
             echo "JRMajor  :$JRMajor   JRMinor  :$JRMinor"
-            if (( ((16#$JRMajor)) < ((16#$lastMajor)) ))
+            if (( 16#$JRMajor < 16#$lastMajor ))
             then
                 continue
-            elif (( ((16#$JRMajor)) == ((16#$lastMajor)) && ((16#$JRMinor)) < ((16#$lastMinor)) ))
+            elif (( 16#$JRMajor == 16#$lastMajor && 16#$JRMinor < 16#$lastMinor ))
             then
                 continue
-            elif (( ((16#$JRMajor)) == ((16#$lastMajor)) ))
+            elif (( 16#$JRMajor == 16#$lastMajor ))
             then
-                if (( ((16#$JRMinor)) - ((16#$lastMinor)) == 1 && ((16#$JRMinor)) != ((16#$max_minor)) ))
+                if (( 16#$JRMinor - 16#$lastMinor == 1 && 16#$JRMinor != 16#$max_minor ))
                 then
                     echo "JR Minor Missing:$dtId $JRMajor $JRMinor"
                     echo "dtId:$dtId zone:$zone rgId:$rgId Major:$JRMajor Minor:$JRMinor" >> MissingJR.tmp
                 fi
-            elif (( ((16#$JRMajor)) - ((16#$lastMajor)) == 1 ))
+            elif (( 16#$JRMajor - 16#$lastMajor == 1 ))
             then
-                if (( ((16#$lastMinor)) != ((16#$max_minor)) ))
+                if (( 16#$lastMinor != 16#$max_minor ))
                 then
                     echo "last JR Missing:$dtId $JRMajor $JRMinor"
                     echo "dtId:$dtId zone:$zone rgId:$rgId Major:$lastMajor Minor:7fffffffffffffff" >> MissingJR.tmp
                 fi
-                if (( ((16#$JRMinor)) != 0  && ((16#$JRMinor)) != ((16#$max_minor)) ))
+                if (( 16#$JRMinor != 0  && 16#$JRMinor != 16#$max_minor ))
                 then
                     echo "JR Missing:$dtId $JRMajor $JRMinor"
                     echo "dtId:$dtId zone:$zone rgId:$rgId Major:$JRMajor Minor:0000000000000000" >> MissingJR.tmp
