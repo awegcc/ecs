@@ -17,5 +17,5 @@ fi
 
 url_link=$(curl -s "http://${ip_port}/diagnostic/RT/0/DumpAllKeys/REP_GROUP_KEY?useStyle=raw&showvalue=gpb" | grep -B1 00000000-0000-0000-0000-000000 | grep http)
 
-curl -s "${url_link%$'\r'}" | awk -F'"' -v varray=$cos '{if($1~"key:"){vdc=substr($2,index($2,"-u")+1)}else if($2~varray){exit}}END{printf("%s  %s\n",vdc,varray)}'
+curl -s "${url_link%$'\r'}" | awk -F'"' -v varray=$cos '{if($1~"key:"&&$2~"VirtualDataCenterData"){value=substr($2,index($2,"-u")+1)}else if($2~varray){vdc=value;exit}}END{printf("%s  %s\n",vdc,varray)}'
 
