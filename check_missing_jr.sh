@@ -68,7 +68,8 @@ function scan_missing_jr()
     dtid_file="${rgId}_${dt_type}.lst"
     url_addr="http://$ip_port/diagnostic/$dt_type/0/"
     curl -s $url_addr | xmllint --format - | awk -F'[<>]' -v rgid=$rgId '/<id>/{if($3~rgid) print $3}' > $dtid_file
-
+    
+    max_minor=$((16#7fffffffffffffff))
     while read dtId
     do
         #Dump JR to get major and minor for each entry
@@ -76,7 +77,7 @@ function scan_missing_jr()
         curl -s -L $url_addr | awk '/schemaType/{print $(NF-2),$NF}' > ${dtId}_mm.lst
         url_addr="http://$ip_port/diagnostic/PR/1/DumpAllKeys/DIRECTORYTABLE_RECORD?type=BPLUSTREE_INFO&dtId=${dtId}&zone=${zone}&useStyle=raw&showvalue=gpb"
         link=$(curl -s -L $url_addr | grep -B1 schema | grep http )
-        eval $(curl -s -L ${link%$'\r'} | grep subKey | tail -n1 | awk -F'\' '/subKey:/{ printf "lastMajor=%s;lastMinor=%s\n",substr($3,4),substr($5,4)}')
+        eval $(curl -s -L ${link%$'\r'} | grep subKey | tail -n1 | awk -F'\' '/subKey:/{ printf "lastMajor=%d;lastMinor=%d\n",substr($3,4),substr($5,4)}')
         if [ "x$lastMajor" == "x" ]
         then
             echo "not find Major of $dtId"
@@ -86,30 +87,30 @@ function scan_missing_jr()
         do
             echo "lastMajor:$lastMajor lastMinor:$lastMinor"
             echo "JRMajor  :$JRMajor   JRMinor  :$JRMinor"
-            if [[ $((0x$JRMajor)) -lt $((0x$lastMajor)) ]]
+            if (( ((16#$JRMajor)) < ((16#$lastMajor)) ))
             then
                 continue
-            elif [[ $((0x$JRMajor)) -eq $((0x$lastMajor)) ]] && [[ $((0x$JRMinor)) -le $((0x$lastMinor)) ]]
+            elif (( ((16#$JRMajor)) == ((16#$lastMajor)) && ((16#$JRMinor)) < ((16#$lastMinor)) ))
             then
                 continue
-            elif [[ $((0x$JRMajor)) -eq $((0x$lastMajor)) ]]
+            elif (( ((16#$JRMajor)) == ((16#$lastMajor)) ))
             then
-                if [[ $(expr $((0x$JRMinor)) - $((0x$lastMinor))) -ne 1 ]] && [[ $JRMinor != "7fffffffffffffff" ]]
+                if (( ((16#$JRMinor)) - ((16#$lastMinor)) == 1 && ((16#$JRMinor)) != ((16#$max_minor)) ))
                 then
-                echo "JR Minor Missing:$dtId $JRMajor $JRMinor"
-                echo "dtId:$dtId zone:$zone rgId:$rgId Major:$JRMajor Minor:$JRMinor" >> MissingJR.tmp
+                    echo "JR Minor Missing:$dtId $JRMajor $JRMinor"
+                    echo "dtId:$dtId zone:$zone rgId:$rgId Major:$JRMajor Minor:$JRMinor" >> MissingJR.tmp
                 fi
-            elif [[ $(expr $((0x$JRMajor)) - $((0x$lastMajor))) -eq 1 ]]
+            elif (( ((16#$JRMajor)) - ((16#$lastMajor)) == 1 ))
             then
-                if [[ $lastMinor != "7fffffffffffffff" ]]
+                if (( ((16#$lastMinor)) != ((16#$max_minor)) ))
                 then
-                echo "last JR Missing:$dtId $JRMajor $JRMinor"
-                echo "dtId:$dtId zone:$zone rgId:$rgId Major:$lastMajor Minor:7fffffffffffffff" >> MissingJR.tmp
+                    echo "last JR Missing:$dtId $JRMajor $JRMinor"
+                    echo "dtId:$dtId zone:$zone rgId:$rgId Major:$lastMajor Minor:7fffffffffffffff" >> MissingJR.tmp
                 fi
-                if [[ $JRMinor != "0000000000000000" ]] && [[ $JRMinor != "7fffffffffffffff" ]]
+                if (( ((16#$JRMinor)) != 0  && ((16#$JRMinor)) != ((16#$max_minor)) ))
                 then
-                echo "JR Missing:$dtId $JRMajor $JRMinor"
-                echo "dtId:$dtId zone:$zone rgId:$rgId Major:$JRMajor Minor:0000000000000000" >> MissingJR.tmp
+                    echo "JR Missing:$dtId $JRMajor $JRMinor"
+                    echo "dtId:$dtId zone:$zone rgId:$rgId Major:$JRMajor Minor:0000000000000000" >> MissingJR.tmp
                 fi
             else
                 echo "JR Major Missing:$dtId $JRMajor $JRMinor"
