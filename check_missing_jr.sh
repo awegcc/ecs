@@ -77,7 +77,11 @@ function scan_missing_jr()
         url_addr="http://$ip_port/diagnostic/PR/1/DumpAllKeys/DIRECTORYTABLE_RECORD?type=BPLUSTREE_INFO&dtId=${dtId}&zone=${zone}&useStyle=raw&showvalue=gpb"
         link=$(curl -s -L $url_addr | grep -B1 schema | grep http )
         eval $(curl -s -L ${link%$'\r'} | grep subKey | tail -n1 | awk -F'\' '/subKey:/{ printf "lastMajor=%s;lastMinor=%s\n",substr($3,4),substr($5,4)}')
-        echo "$dtId"
+        if [ "x$lastMajor" == "x" ]
+        then
+            echo "not find Major of $dtId"
+            continue
+        fi
         while read JRMajor JRMinor
         do
             echo "lastMajor:$lastMajor lastMinor:$lastMinor"
