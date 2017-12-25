@@ -1,5 +1,6 @@
 #!/bin/sh
-# get rep_group
+# get rep_group id
+declare -a rgids
 
 if [[ $# < 1 ]]
 then
@@ -8,5 +9,10 @@ else
     ip_port="$1:9101"
 fi
 
-curl -s "http://${ip_port}/diagnostic/RT/0/DumpAllKeys/REP_GROUP_KEY?useStyle=raw" | awk -F: '/schemaType/{print $4}'
+eval $(curl -s "http://${ip_port}/diagnostic/RT/0/DumpAllKeys/REP_GROUP_KEY?useStyle=raw" | awk 'BEGIN{i=0}/schemaType/{printf "rgids[%d]=%s\n",i++,$4}')
+
+for rgid in ${rgids[@]}
+do
+    echo "rgid: $rgid"
+done
 
