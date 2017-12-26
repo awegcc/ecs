@@ -15,6 +15,7 @@ print_usage()
 #IP of Missing JR zone
 ip_port=''
 dt_type='LS'
+dtid_file='dtId_file.lst'
 rgId=(076f04fa-6856-4cb2-a07f-5debd82129d5 459c1a0d-568d-46d5-9a16-81d9701733e8 56eee2ce-5947-4fe3-bdca-aeb2d0156403)
 
 while getopts ':h:t:f:' opt
@@ -24,7 +25,7 @@ do
     ;;
     t) dt_type="${OPTARG}"
     ;;
-    f) dt_file="${OPTARG}"
+    f) dtid_file="${OPTARG}"
     ;;
     ?) echo '  error'
        print_usage
@@ -59,6 +60,12 @@ then
     exit
 fi
 
+function dump_dtid()
+{
+    url_addr="http://$ip_port/diagnostic/$dt_type/0/"
+    curl -s $url_addr | xmllint --format - | awk -F'[<>]' -v rgid=$rgId '/<id>/{if($3~rgid) print $3}' > $dtid_file
+}
+
 function scan_missing_jr()
 {
     if [ $# -lt 5 ] ; then
@@ -67,9 +74,6 @@ function scan_missing_jr()
         rgId=$3
         host=$4
     fi
-    dtid_file="${rgId}_${dt_type}.lst"
-    url_addr="http://$ip_port/diagnostic/$dt_type/0/"
-    curl -s $url_addr | xmllint --format - | awk -F'[<>]' -v rgid=$rgId '/<id>/{if($3~rgid) print $3}' > $dtid_file
     
     max_minor=$((16#7fffffffffffffff))
     while read dtId
