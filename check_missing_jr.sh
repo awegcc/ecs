@@ -17,12 +17,14 @@ ip_port=''
 dt_type='LS'
 rgId=(076f04fa-6856-4cb2-a07f-5debd82129d5 459c1a0d-568d-46d5-9a16-81d9701733e8 56eee2ce-5947-4fe3-bdca-aeb2d0156403)
 
-while getopts ':h:t:' opt
+while getopts ':h:t:f:' opt
 do
     case $opt in
     h) ip_port="${OPTARG}:9101"
     ;;
     t) dt_type="${OPTARG}"
+    ;;
+    f) dt_file="${OPTARG}"
     ;;
     ?) echo '  error'
        print_usage
