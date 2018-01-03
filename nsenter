@@ -1,0 +1,8 @@
+#!/bin/bash
+pid=$(docker inspect --format='{{.State.Pid}}' object-main)
+if [ -z "$1" ] ; then
+    sudo nsenter -m -u -i -p -t $pid /bin/bash
+else
+    sudo nsenter -m -u -i -p -t $pid -- $*
+fi
+
