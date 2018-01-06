@@ -2,14 +2,33 @@
 #
 # get RG's gc tasks
 #
-declare -a rgid=('fec41a5d-751a-41f2-8519-ee701a62dca4' '53169064-41de-438a-add1-917867e35323')
+declare -a rg_list
 TYPE='BTREE'
+ip_port=''
 
-if [[ $# < 1 ]]
+function print_usage()
+{
+    echo "$0 -h ip -t [btree|repo]"
+    exit
+}
+
+while getopts ':t:h:v' opt
+do
+    case $opt in
+    h) ip_port="${OPTARG}:9101"
+    ;;
+    t)
+        TYPE="${OPTARG^^}
+    ;;
+    ?) echo 'error'
+       print_usage
+    ;;
+    esac
+done
+
+if [ "x${ip_port}" == "x" ]
 then
     ip_port=$(netstat -ntl | awk '/:9101/{print $4;exit}')
-else
-    ip_port="$1:9101"
 fi
 
 eval $(curl -s "http://${ip_port}/stats/ssm/varraycapacity/" | awk -F'[<>]' '/VarrayId/{printf "cos=\047%s\047\n",$3}')
@@ -31,24 +50,34 @@ fi
 echo $vdc
 echo $cos
 
+eval $(curl -s "http://${ip_port}/ownership/listInactiveRg" | awk -F: '{for(i=1;i<=NF;i++) if($i=="ReplicationGroupInfo")printf("rg_list[%d]=%s\n",n++,$(i+1))}')
+if [ "x${#rg_list[@]}" == 'x0' ]
+then
+    echo "Can not get inactive rg list"
+    exit
+fi
 
-dump_file="TASK_${TYPE}_GC_DUMP"
-all_url_file="ALL_${TYPE}_GC_URL"
+dump_file="${TYPE}_GC_TASK_DUMP"
+all_url_file="${TYPE}_GC_TASK_URL"
 
 curl -s "http://${ip_port}/diagnostic/CT/1/DumpAllKeys/CHUNK_GC_SCAN_STATUS_TASK?zone=${vdc}&type=${TYPE}&time=0&useStyle=raw&showvalue=gpb" -o $dump_file
 grep http $dump_file > $all_url_file
 dos2unix $all_url_file
 while read -u 99 url
 do
-    index=$(echo $url | awk -F_ '{print $4}')
-    echo "process $index"
-    dump_tmp="All_${TYPE}_TASK_OF_${index}_128"
+    echo "$index"
+    dump_tmp="${TYPE}_GC_TASK.tmp"
+    :>$dump_tmp
     curl -s "$url" -o $dump_tmp
     
-    for rg in ${rgid[@]}
+    for rgid in ${rg_list[@]}
     do
+        if [ "x${#rgid}" != "x36" ]
+        then
+            echo "invalid rg: $rgid"
+            continue
+        fi
         grep -B1 $rg $dump_tmp >> "${dump_file}_${rg}"
     done
-
 done 99<$all_url_file
 
