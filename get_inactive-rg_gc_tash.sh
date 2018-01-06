@@ -18,7 +18,7 @@ do
     h) ip_port="${OPTARG}:9101"
     ;;
     t)
-        TYPE="${OPTARG^^}
+        TYPE="${OPTARG^^}"
     ;;
     ?) echo 'error'
        print_usage
@@ -77,7 +77,7 @@ do
             echo "invalid rg: $rgid"
             continue
         fi
-        grep -B1 $rg $dump_tmp >> "${dump_file}_${rg}"
+        grep -B1 $rgid $dump_tmp >> "${dump_file}_${rg}"
     done
 done 99<$all_url_file
 
