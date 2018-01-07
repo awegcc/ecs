@@ -39,7 +39,6 @@ then
 fi
 
 url_link=$(curl -s "http://${ip_port}/diagnostic/RT/0/DumpAllKeys/REP_GROUP_KEY?useStyle=raw&showvalue=gpb" | grep -B1 00000000-0000-0000-0000-000000 | grep http)
-
 eval $(curl -s "${url_link%$'\r'}" | awk -F'"' -v varray=$cos '{if($1~"key:"&&$2~"VirtualDataCenterData"){value=substr($2,index($2,"-u")+1)}else if($2~varray){vdc=value;exit}}END{printf("vdc=%s\n",vdc)}')
 if [ "x${vdc}" == "x" ]
 then
@@ -57,9 +56,8 @@ then
     exit
 fi
 
-dump_file="${TYPE}_GC_TASK_DUMP"
-all_url_file="${TYPE}_GC_TASK_URL"
-
+dump_file="${TYPE}_GC_VERIFICATION_TASK_DUMP"
+all_url_file="${TYPE}_GC_VERIFICATION_TASK_URL"
 curl -s "http://${ip_port}/diagnostic/CT/1/DumpAllKeys/CHUNK_GC_SCAN_STATUS_TASK?zone=${vdc}&type=${TYPE}&time=0&useStyle=raw&showvalue=gpb" -o $dump_file
 grep http $dump_file > $all_url_file
 dos2unix $all_url_file
