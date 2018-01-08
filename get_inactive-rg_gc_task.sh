@@ -2,7 +2,7 @@
 #
 # get RG's gc tasks
 #
-declare -a rg_list
+declare -A rg_list
 TYPE='BTREE'
 ip_port=''
 
@@ -49,7 +49,7 @@ fi
 echo $vdc
 echo $cos
 
-eval $(curl -s "http://${ip_port}/ownership/listInactiveRg" | awk -F: '{for(i=1;i<=NF;i++) if($i=="ReplicationGroupInfo")printf("rg_list[%d]=%s\n",n++,$(i+1))}')
+eval $(curl -s "http://${ip_port}/ownership/listInactiveRg" | awk -F: '{for(i=1;i<=NF;i++) if($i=="ReplicationGroupInfo")printf("rg_list[%s]=0\n",$(i+1))}')
 if [ "x${#rg_list[@]}" == 'x0' ]
 then
     echo "Can not get inactive rg list"
@@ -67,21 +67,24 @@ do
     eval $(curl -s "http://${dt_ip_port}/stats/ssm/varraycapacity/" | awk -F'[<>]' '/VarrayId/{printf "dt_cos=\047%s\047\n",$3}')
     echo "$dtId"
     dump_tmp="${TYPE}_GC_TASK.tmp"
-    :>$dump_tmp
     curl -s "$url" -o $dump_tmp
     
-    for rgid in ${rg_list[@]}
+    for rgid in ${!rg_list[@]}
     do
-        if [ "x${#rgid}" != "x36" ]
-        then
-            echo "invalid rg: $rgid"
-            continue
-        fi
-        grep -B1 $rgid $dump_tmp >> "${dump_file}_${rgid}"
+        echo "rgid: $rgid"
+        grep -B1 $rgid $dump_tmp | grep 'schemaType' > ${dump_file}_${rgid}
+        count=$(wc -l ${dump_file}_${rgid})
+        rg_list[$rgid]=$((rg_list[$rgid]+count))
+        while read -u 98 id_line
+        do
+            chunkid=$(echo $id_line | cut -d' ' -f10)
+            # cleanupGCVerificationTask PUT /cleanupTask/{cos}/{level}/{chunk}
+            curl -f -s -X PUT -L "http://${dt_ip_port}/cleanupTask/${dt_cos}/1/${chunkid}"
+        done
     done
-    # http://${ip}:9101/triggerGcVerification/clearTasksOfCT/{chunkDataType}/{dtId}/{withRg}
-    curl -f -s -X DELETE -L "http://${dt_ip_port}/triggerGcVerification/clearTasksOfCT/${TYPE}/${dtId}/true"
-    # cleanupGCVerificationTask PUT /cleanupTask/{cos}/{level}/{chunk}
-    curl -f -s -X PUT -L "http://${dt_ip_port}/cleanupTask/${dt_cos}/1/{chunk}"
 done 99<$all_url_file
 
+for rgid in ${!rg_list[@]}
+do
+    echo "$rgid: ${rg_list[@rgid]}"
+done
