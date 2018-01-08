@@ -58,12 +58,12 @@ fi
 
 dump_file="${TYPE}_GC_VERIFICATION_TASK_DUMP"
 all_url_file="${TYPE}_GC_VERIFICATION_TASK_URL"
-curl -s "http://${ip_port}/diagnostic/CT/1/DumpAllKeys/CHUNK_GC_SCAN_STATUS_TASK?zone=${vdc}&type=${TYPE}&time=0&useStyle=raw&showvalue=gpb" -o $dump_file
-grep http $dump_file > $all_url_file
+curl -s "http://${ip_port}/diagnostic/CT/1/DumpAllKeys/CHUNK_GC_SCAN_STATUS_TASK?zone=${vdc}&type=${TYPE}&time=0&useStyle=raw&showvalue=gpb" | grep 'http' > $all_url_file
 dos2unix $all_url_file
 while read -u 99 url
 do
-    echo "$index"
+    dtId=$(echo $url | cut -d/ -f4)
+    echo "$dtId"
     dump_tmp="${TYPE}_GC_TASK.tmp"
     :>$dump_tmp
     curl -s "$url" -o $dump_tmp
