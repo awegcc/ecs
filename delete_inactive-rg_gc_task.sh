@@ -79,9 +79,9 @@ do
         while read -u 98 id_line
         do
             chunkid=$(echo $id_line | cut -d' ' -f10)
-            echo 'chunkid $chunkid'
+            echo "chunkid $chunkid"
             # cleanupGCVerificationTask PUT /cleanupTask/{cos}/{level}/{chunk}
-            curl -f -s -X PUT -L "http://${dt_ip_port}/cleanupTask/${dt_cos}/1/${chunkid%$'\r'}"
+            curl -X PUT -L "http://${dt_ip_port}/cleanupTask/${dt_cos}/1/${chunkid%$'\r'}"
         done 98<${dump_file}_${rgid}
     done
 done 99<$all_url_file
