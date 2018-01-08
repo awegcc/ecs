@@ -88,5 +88,5 @@ done 99<$all_url_file
 
 for rgid in ${!rg_list[@]}
 do
-    echo "$RG: rgid ${TYPE}_GC_TASK: ${rg_list[$rgid]}"
+    echo "RG: $rgid ${TYPE}_GC_TASK: ${rg_list[$rgid]}"
 done
