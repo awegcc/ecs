@@ -58,7 +58,8 @@ fi
 
 dump_file="${TYPE}_GC_VERIFICATION_TASK_DUMP"
 all_url_file="${TYPE}_GC_VERIFICATION_TASK_URL"
-curl -s "http://${ip_port}/diagnostic/CT/1/DumpAllKeys/CHUNK_GC_SCAN_STATUS_TASK?zone=${vdc}&type=${TYPE}&time=0&useStyle=raw&showvalue=gpb" | grep 'http' > $all_url_file
+#curl -s "http://${ip_port}/diagnostic/CT/1/DumpAllKeys/CHUNK_GC_SCAN_STATUS_TASK?zone=${vdc}&type=${TYPE}&time=0&useStyle=raw&showvalue=gpb" | grep 'http' > $all_url_file
+all_url_file=ALL_BTREE_GC_URL
 dos2unix $all_url_file
 while read -u 99 url
 do
@@ -73,7 +74,7 @@ do
     do
         echo "rgid: $rgid"
         grep -B1 $rgid $dump_tmp | grep 'schemaType' > ${dump_file}_${rgid}
-        count=$(wc -l ${dump_file}_${rgid})
+        count=$(grep -c 'schemaType' ${dump_file}_${rgid})
         rg_list[$rgid]=$((rg_list[$rgid]+count))
         while read -u 98 id_line
         do
@@ -81,7 +82,7 @@ do
             echo 'chunkid $chunkid'
             # cleanupGCVerificationTask PUT /cleanupTask/{cos}/{level}/{chunk}
             curl -f -s -X PUT -L "http://${dt_ip_port}/cleanupTask/${dt_cos}/1/${chunkid%$'\r'}"
-        done
+        done 98<${dump_file}_${rgid}
     done
 done 99<$all_url_file
 
