@@ -80,7 +80,7 @@ do
             chunkid=$(echo $id_line | cut -d' ' -f10)
             echo 'chunkid $chunkid'
             # cleanupGCVerificationTask PUT /cleanupTask/{cos}/{level}/{chunk}
-            curl -f -s -X PUT -L "http://${dt_ip_port}/cleanupTask/${dt_cos}/1/${chunkid}"
+            curl -f -s -X PUT -L "http://${dt_ip_port}/cleanupTask/${dt_cos}/1/${chunkid%$'\r'}"
         done
     done
 done 99<$all_url_file
