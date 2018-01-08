@@ -62,7 +62,9 @@ curl -s "http://${ip_port}/diagnostic/CT/1/DumpAllKeys/CHUNK_GC_SCAN_STATUS_TASK
 dos2unix $all_url_file
 while read -u 99 url
 do
+    dt_ip_port=$(echo $url | awk -F/ '{print $3}')
     dtId=$(echo $url | cut -d/ -f4)
+    eval $(curl -s "http://${dt_ip_port}/stats/ssm/varraycapacity/" | awk -F'[<>]' '/VarrayId/{printf "dt_cos=\047%s\047\n",$3}')
     echo "$dtId"
     dump_tmp="${TYPE}_GC_TASK.tmp"
     :>$dump_tmp
@@ -75,7 +77,11 @@ do
             echo "invalid rg: $rgid"
             continue
         fi
-        grep -B1 $rgid $dump_tmp >> "${dump_file}_${rg}"
+        grep -B1 $rgid $dump_tmp >> "${dump_file}_${rgid}"
     done
+    # http://${ip}:9101/triggerGcVerification/clearTasksOfCT/{chunkDataType}/{dtId}/{withRg}
+    curl -f -s -X DELETE -L "http://${dt_ip_port}/triggerGcVerification/clearTasksOfCT/${TYPE}/${dtId}/true"
+    # cleanupGCVerificationTask PUT /cleanupTask/{cos}/{level}/{chunk}
+    curl -f -s -X PUT -L "http://${dt_ip_port}/cleanupTask/${dt_cos}/1/{chunk}"
 done 99<$all_url_file
 
