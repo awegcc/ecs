@@ -15,11 +15,12 @@ then
     exit
 fi
 
-#################################### get local storage pool(virtual array) info
+# get local varray
 curl -s -L --location-trusted -k -H "${SDS_TOKEN}" "https://${mgmt_addr}/vdc/data-services/varrays" | xmllint --format -
 
+# get local vdc
 curl -s -L --location-trusted -k -H "${SDS_TOKEN}" "https://${mgmt_addr}/object/vdcs/vdc/local" | xmllint --format -
 
-##################################### get zone id name map
+# get vdc_list
 curl -s -L --location-trusted -k -H "${SDS_TOKEN}" "https://${mgmt_addr}/object/vdcs/vdc/list" | xmllint --format -
 
