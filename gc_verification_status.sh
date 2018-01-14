@@ -1,16 +1,14 @@
 #!/bin/bash
 #
-if [[ $# == 2 ]]
+if [[ $# == 1 ]]
 then
-    rg=$1
-    days=$2
-elif [[ $# == 1 ]]
-then
-    rg=$1
+    days=$1
 else
-    echo "Usage: $0 rgId days"
+    echo "Usage: $0 days"
     exit 1
 fi
+
+TYPE='REPO_SCAN'
 
 datelist='{'
 for((i=days;i>0;i--))
@@ -28,42 +26,42 @@ dump_data=dump_data.${datenow}
 echo viprexec -c "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}"
 viprexec "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
 
-grep "REPO_SCAN" ${dump_data} | grep 'Saving checkpoint' > candidateCount.log
-grep "REPO_SCAN" ${dump_data} | grep 'This round' > roundEnd.log
+awk -v type=$TYPE '$2~type{
+                  if($4=="ChunkReferenceScanner.java" && $7=="Saving") {
+                      dtid=substr($11,index($11,"_")+1)
+                      dtid=substr(dtid,1,index(dtid,":"))
+                      for(i=1;i<=NF;i++){
+                          if($i=="candidateCount"){
+                              array[dtid][$i]=$(i+1);
+                          } else if($i=="failedCandidateCount"){
+                              array[dtid][$i]=$(i+1);
+                          } else if($i=="lastTaskTime"){
+                              array[dtid][$i]=$(i+1);
+                          }
+                      }
+                  }
+                  else if($4=="RepoChunkReferenceScanner.java" && $7=="This") {
+                      dtid=substr($11,index($11,"_")+1)
+                      dtid=substr(dtid,1,index(dtid,":"))
+                      for(i=1;i<=NF;i++){
+                          if($i=="milliseconds") {
+                              array[dtid][$i]=$(i-1);
+                              array[dtid]["roundtime"]=substr($1,0,19);
+                          }
+                      }
+                  }
+    }
+    END{
+        printf("%48s\tcandidateCount\tfailedCandidateCount\tlastTaskTime\tlastEndtime\tlastDuration (hrs)\n","dtId")
+        for(k1 in array) {
+            printf("%s\t%14s\t%14s\t%d\t%s\t%s\t%.2f\n",k1,\
+                                                            array[k1]["candidateCount"],\
+                                                            array[k1]["failedCandidateCount"],\
+                                                            array[k1]["lastTaskTime"],\
+                                                            array[k1]["roundtime"],\
+                                                            array[k1]["milliseconds"],\
+                                                            array[k1]["milliseconds"]/3600);
+        }
+    }' $dump_data
 
-for((index=0;index<128;index++))
-do
-    ob="OB_${index}_128_0:"
-    grep "${rg}_${ob}" candidateCount.log | tail -n 1 > result.log.${index}
-    grep "${rg}_${ob}" roundEnd.log | tail -n 1 >> result.log.${index}
-    eval $( awk '/ChunkReferenceScanner.java/{
-                    for(i=1;i<=NF;i++){
-                        if($i=="candidateCount"){
-                            candidateCount=$(i+1);
-                        } else if($i=="failedCandidateCount"){
-                            failedCandidateCount=$(i+1);
-                        } else if($i=="lastTaskTime"){
-                            lastTaskTime=$(i+1);
-                        }
-                    }
-                }
-                /RepoChunkReferenceScanner.java/{
-                    for(i=1;i<=NF;i++){
-                        if($i=="milliseconds") {
-                            roundtime=substr($1,0,19);
-                            duration=$(i-1);
-                        }
-                    }
-                }
-            END{
-                printf "candidateCount=%d;failedCandidateCount=%d;lastTaskTime=%d\n",candidateCount,failedCandidateCount,lastTaskTime;
-                printf "lastEndtime=%s;lastDuration=%s;hours=%.2f\n",roundtime,duration,duration/1000/3600;
-            }' result.log.${index} )
-    printf "%13s candidateCount %9s, failedCandidateCount %6s, lastTaskTime %13s, lastEndtime %19s, lastDuration %11s (%s h)\n"\
-           $ob $candidateCount $failedCandidateCount $lastTaskTime $lastEndtime $lastDuration $hours
-    rm -f result.log.${index}
-done > GCVerificationAnalysis.log.${datenow}.${rg}
-rm -f candidateCount.log
-rm -f roundEnd.log
-rm -f ${dump_data}
-
+rm -f $dump_data
