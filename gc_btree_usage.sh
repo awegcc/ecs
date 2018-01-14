@@ -20,23 +20,18 @@ fi
 curl "http://${ip_port}/gc/btreeUsage/${cos}/${LEVEL}" -o ${dump_file}
 
 awk -F, '$2~"SEALED" && $3>0 {
-              aggr[$4,"garbage"]+=134217600-$3;
-              aggr[$4,"count"]+=1;
+              aggr[$4]["garbage"]+=134217600-$3;
+              aggr[$4]["count"]+=1;
               if($3<6710880) {
-                  aggr[$4,"partialGarbage"]+=134217600-$3;
-                  aggr[$4,"partialCount"]+=1;
+                  aggr[$4]["partialGarbage"]+=134217600-$3;
+                  aggr[$4]["partialCount"]+=1;
               }
          }
          END{
-             for(key in aggr) {
-                 split(key,rg_v,SUBSEP);
-                 if (rg_v[1] in rgs == 0) {
-                     rgs[rg_v[1]]=1;
-                     printf("%s\n", rg_v[1]);
-                     printf("garbage       : %s\n", aggr[rg_v[1],"garbage"]);
-                     printf("count         : %s\n", aggr[rg_v[1],"count"]);
-                     printf("partialGarbage: %s\n", aggr[rg_v[1],"partialGarbage"]);
-                     printf("partialCount  : %s\n", aggr[rg_v[1],"partialCount"]);
+             for(k1 in aggr) {
+                 printf("%s\n",k1);
+                 for(k2 in aggr[k1]) {
+                     printf("%-14s: %s\n",k2,aggr[k1][k2]);
                  }
              }
          }' ${dump_file}
