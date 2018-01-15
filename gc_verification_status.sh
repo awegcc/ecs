@@ -21,7 +21,7 @@ do
 done
 datelist="${datelist}$(date +'.%Y%m%d*,}')"
 datenow=$(date '+%Y%m%d-%H%M')
-dump_data=dump_data.$datenow
+dump_data=${TYPE}_dump_data.$datenow
 result_file=${TYPE}_GC_Verification.${datenow}
 
 echo viprexec -c "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}"
@@ -50,16 +50,19 @@ awk -v type=$TYPE '$2~type{
                               dtid=substr(dtid,1,index(dtid,":")-7)
                           } else if($i=="milliseconds") {
                               array[dtid][$i]=$(i-1);
+                          } else if($i=="objectScanCount:") {
+                              array[dtid][$i]=$(i+1);
                           }
                       }
-                      array[dtid]["lastEndtime"]=substr($1,index($1,"T")-5)
+                      array[dtid]["lastEndtime"]=substr($1,index($1,"T")-5,14)
                   }
     }
     END{
-        printf("%43s\tcandidateCount\tfailedCandidateCount\tlastTaskTime\t%19s\tlastDuration\t(hrs)\n","dtId","lastEndtime")
+        printf("%43s objectScanCount candidateCount failedCandidate lastTaskTime %14s lastDuration (hrs)\n","dtId","lastEndtime")
         n=asorti(array,sorted)
         for(i=0; i<=n; i++) {
-            printf("%-43s\t%15s\t%21s\t%13s\t%19s\t%13s\t%.2f\n",sorted[i],\
+            printf("%-43s %15d %14d %14d %13s %14s %12s %.2f\n",sorted[i],\
+                                                            array[sorted[i]]["objectScanCount:"],\
                                                             array[sorted[i]]["candidateCount"],\
                                                             array[sorted[i]]["failedCandidateCount"],\
                                                             array[sorted[i]]["lastTaskTime"],\
