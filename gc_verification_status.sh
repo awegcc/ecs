@@ -24,14 +24,15 @@ dump_data=dump_data.$(date '+%Y%m%d')
 
 echo viprexec -c "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}"
 #viprexec "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
-viprexec "zgrep -h REPO_SCAN.*ChunkReferenceScanner.java /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
+#viprexec "zgrep -h REPO_SCAN.*ChunkReferenceScanner.java /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
+dump_data=dump_data.dat
 
 awk -v type=$TYPE '$2~type{
                   if($4=="ChunkReferenceScanner.java" && $7=="Saving") {
                       for(i=1;i<=NF;i++){
                           if($i~":OwnershipInfo:") {
                               dtid=substr($i,index($i,"_")+1)
-                              dtid=substr(dtid,1,index(dtid,":")-1)
+                              dtid=substr(dtid,1,index(dtid,":")-7)
                           } else if($i=="candidateCount"){
                               array[dtid][$i]=$(i+1);
                           } else if($i=="failedCandidateCount"){
@@ -45,7 +46,7 @@ awk -v type=$TYPE '$2~type{
                       for(i=1;i<=NF;i++){
                           if($i~":OwnershipInfo:") {
                               dtid=substr($i,index($i,"_")+1)
-                              dtid=substr(dtid,1,index(dtid,":")-1)
+                              dtid=substr(dtid,1,index(dtid,":")-7)
                           } else if($i=="milliseconds") {
                               array[dtid][$i]=$(i-1);
                           }
@@ -54,9 +55,9 @@ awk -v type=$TYPE '$2~type{
                   }
     }
     END{
-        printf("%50s\tcandidateCount\tfailedCandidateCount\tlastTaskTime\t%19s\tlastDuration (hrs)\n","dtId","lastEndtime")
+        printf("%43s\tcandidateCount\tfailedCandidateCount\tlastTaskTime\t%19s\tlastDuration (hrs)\n","dtId","lastEndtime")
         for(k1 in array) {
-            printf("%50s\t%15s\t%21s\t%13s\t%19s\t%13s\t%.2f\n",k1,\
+            printf("%-43s\t%15s\t%21s\t%13s\t%19s\t%13s\t%.2f\n",k1,\
                                                             array[k1]["candidateCount"],\
                                                             array[k1]["failedCandidateCount"],\
                                                             array[k1]["lastTaskTime"],\
@@ -66,4 +67,4 @@ awk -v type=$TYPE '$2~type{
         }
     }' $dump_data
 
-rm -f $dump_data
+#rm -f $dump_data
