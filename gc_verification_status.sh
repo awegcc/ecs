@@ -55,15 +55,16 @@ awk -v type=$TYPE '$2~type{
                   }
     }
     END{
-        printf("%43s\tcandidateCount\tfailedCandidateCount\tlastTaskTime\t%19s\tlastDuration (hrs)\n","dtId","lastEndtime")
-        for(k1 in array) {
-            printf("%-43s\t%15s\t%21s\t%13s\t%19s\t%13s\t%.2f\n",k1,\
-                                                            array[k1]["candidateCount"],\
-                                                            array[k1]["failedCandidateCount"],\
-                                                            array[k1]["lastTaskTime"],\
-                                                            array[k1]["lastEndtime"],\
-                                                            array[k1]["milliseconds"],\
-                                                            array[k1]["milliseconds"]/3600000);
+        printf("%43s\tcandidateCount\tfailedCandidateCount\tlastTaskTime\t%19s\tlastDuration\t(hrs)\n","dtId","lastEndtime")
+        n=asorti(array,sorted)
+        for(i=0; i<=n; i++) {
+            printf("%-43s\t%15s\t%21s\t%13s\t%19s\t%13s\t%.2f\n",sorted[i],\
+                                                            array[sorted[i]]["candidateCount"],\
+                                                            array[sorted[i]]["failedCandidateCount"],\
+                                                            array[sorted[i]]["lastTaskTime"],\
+                                                            array[sorted[i]]["lastEndtime"],\
+                                                            array[sorted[i]]["milliseconds"],\
+                                                            array[sorted[i]]["milliseconds"]/3600000);
         }
     }' $dump_data
 
