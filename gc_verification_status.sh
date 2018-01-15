@@ -22,11 +22,8 @@ done
 datelist="${datelist}$(date +'.%Y%m%d*,}')"
 dump_data=dump_data.$(date '+%Y%m%d')
 
-# [TaskScheduler-BlobService-REPO_SCAN-ScheduledExecutor-005] DEBUG  ChunkReferenceScanner.java (line 147) Saving checkpoint for scanner REPO:urn:storageos:OwnershipInfo:d3cbdbfe-7590-4b34-afd4-4a0490dbe7cc_e8c3dc6f-cac7-40f4-b0c7-de94fd0ef724_OB_98_128_0:: candidateCount 2, failedCandidateCount 0, lastTaskTime 1515577721063
-# [TaskScheduler-BlobService-REPO_SCAN-ScheduledExecutor-000]  INFO  RepoChunkReferenceScanner.java (line 217) This round GC verification of scanner:REPO:urn:storageos:OwnershipInfo:d3cbdbfe-7590-4b34-afd4-4a0490dbe7cc_5af20804-aec5-4eab-8899-df8cc7aa5b45_OB_40_128_0: last: 338941 milliseconds for objectScanCount 123928
-
 echo viprexec -c "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}"
-#viprexec "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
+viprexec "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
 
 awk -v type=$TYPE '$2~type{
                   if($4=="ChunkReferenceScanner.java" && $7=="Saving") {
