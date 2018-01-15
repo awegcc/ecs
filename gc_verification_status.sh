@@ -23,7 +23,8 @@ datelist="${datelist}$(date +'.%Y%m%d*,}')"
 dump_data=dump_data.$(date '+%Y%m%d')
 
 echo viprexec -c "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}"
-viprexec "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
+#viprexec "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
+viprexec "zgrep -h REPO_SCAN.*ChunkReferenceScanner.java /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
 
 awk -v type=$TYPE '$2~type{
                   if($4=="ChunkReferenceScanner.java" && $7=="Saving") {
