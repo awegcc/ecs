@@ -7,7 +7,7 @@ elif [[ $# == 0 ]]
 then
     days=0
 else
-    echo "Usage: $0 back_forward_days"
+    echo "Usage: $0 backward_days"
     exit 1
 fi
 
@@ -20,7 +20,9 @@ do
         datelist="$datelist$day"
 done
 datelist="${datelist}$(date +'.%Y%m%d*,}')"
-dump_data=dump_data.$(date '+%Y%m%d')
+datenow=$(date '+%Y%m%d-%H%M')
+dump_data=dump_data.$datenow
+result_file=${TYPE}_GC_Verification.${datenow}
 
 echo viprexec -c "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}"
 #viprexec "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
@@ -65,6 +67,7 @@ awk -v type=$TYPE '$2~type{
                                                             array[sorted[i]]["milliseconds"],\
                                                             array[sorted[i]]["milliseconds"]/3600000);
         }
-    }' $dump_data
+    }' $dump_data | tee $result_file
 
 rm -f $dump_data
+echo "Result saved in $result_file"
