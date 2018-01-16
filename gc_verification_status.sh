@@ -60,8 +60,8 @@ awk -v type=$TYPE '$2~type{
     END{
         printf("%43s objectScanCount candidateCount failedCandidate lastTaskTime %14s lastDuration (hrs)\n","dtId","lastEndtime")
         n=asorti(array,sorted)
-        for(i=0; i<=n; i++) {
-            printf("%-43s %15d %14d %14d %13s %14s %12s %.2f\n",sorted[i],\
+        for(i=1; i<=n; i++) {
+            printf("%-43s %15s %14d %14s %13s %14s %12s %.2f\n",sorted[i],\
                                                             array[sorted[i]]["objectScanCount:"],\
                                                             array[sorted[i]]["candidateCount"],\
                                                             array[sorted[i]]["failedCandidateCount"],\
@@ -69,6 +69,7 @@ awk -v type=$TYPE '$2~type{
                                                             array[sorted[i]]["lastEndtime"],\
                                                             array[sorted[i]]["milliseconds"],\
                                                             array[sorted[i]]["milliseconds"]/3600000);
+            if(substr(sorted[i],1,index(sorted[i],"_")) != substr(sorted[i+1],1,index(sorted[i+1],"_"))) print "";
         }
     }' $dump_data | tee $result_file
 
