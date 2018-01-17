@@ -18,11 +18,9 @@ function search_logs
         datelist="$datelist$day"
     done
     datelist="${datelist}$(date +'.%Y%m%d*,}')"
-    proc_num=$(sed -n "$=" ${MACHINES})
     set -x
-    echo "proc $proc_num"
     log_files="/opt/emc/caspian/fabric/agent/services/object/main/log/${log_file}${datelist}"
-    xargs -a ${MACHINES} -I{} -P $proc_num  ssh {} "zgrep -h $key_words $log_files" >> ${out_put_file}out
+    xargs -a ${MACHINES} -I{} -P0  ssh {} "zgrep -h $key_words $log_files" >> ${out_put_file}out
     set +x
 
     echo -e "line:${LINENO} ${FUNCNAME[0]} - END"
