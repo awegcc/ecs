@@ -5,9 +5,9 @@
 
 PY_CRC32='crc32.py'
 
-print_usage()
+function print_usage()
 {
-    base_name=$(basename $0)
+    local base_name=$(basename $0)
     echo -e "\033[0;31m Usage: \033[0m $base_name [options...]"
     echo -e " -a       (-d,-v,-i) dump, validate and inject data"
     echo -e " -s       Dump first sealed chunk data"
@@ -95,13 +95,13 @@ declare -A ipmap=()
 eval $(getrackinfo | awk 'NF==8{printf "ipmap[\"%s\"]=%s\n",$5, $1}')
 #echo ${ipmap[$public_ip]}
 
-dump_chunk_data()
+function dump_chunk_data()
 {
     if [[ $# < 1 ]]
     then
         echo "dump_chunk_data need arg: chunkid"
     fi
-    chunkid=$1
+    local chunkid=$1
     echo "chunkid   : $chunkid"
     mkdir -p $chunkid
     curl -s "http://${ip_port}/diagnostic/1/ShowChunkInfo?cos=${cos}&chunkid=${chunkid}" -o $chunkid/${chunkid}.info
@@ -169,7 +169,7 @@ dump_chunk_data()
 }
 
 
-validate_chunk_data()
+function validate_chunk_data()
 {
     retval=1
     if [[ $# < 1 ]]
@@ -177,7 +177,7 @@ validate_chunk_data()
         echo "validate_chunk_data need arg: chunkid"
         return 1
     fi
-    chunkid=$1
+    local chunkid=$1
     if cmp -s "${chunkid}/${chunkid}.copy1" "${chunkid}/${chunkid}.copy2"
     then
         echo "cmp ${chunkid} OK"
@@ -193,14 +193,14 @@ validate_chunk_data()
     return $retval
 }
 
-inject_chunk_data()
+function inject_chunk_data()
 {
     if [[ $# < 1 ]]
     then
         echo "validate_chunk_data need arg: chunkid"
         return 1
     fi
-    chunkid=$1
+    local chunkid=$1
     if [ ! -f "${chunkid}/${chunkid}.info" ]
     then
         echo "${chunkid}/${chunkid}.info not find"
