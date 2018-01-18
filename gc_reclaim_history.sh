@@ -9,26 +9,22 @@ function search_logs
     local log_file=$1
     local within_days=$2
     local key_words="$3"
-    local out_put_file=$4
-
-    datelist='{'
-    for((i=within_days-1;i>0;i--))
-    do
-        day=$(date +'.%Y%m%d*,' -d"$i day ago")
-        datelist="$datelist$day"
-    done
-    datelist="${datelist}$(date +'.%Y%m%d*,}')"
+    local output_file=$4
+    local log_path="/opt/emc/caspian/fabric/agent/services/object/main/log/"
     set -x
-    log_files="/opt/emc/caspian/fabric/agent/services/object/main/log/${log_file}${datelist}"
-    xargs -a ${MACHINES} -I{} -P0  ssh {} "zgrep -h $key_words $log_files" >> ${out_put_file}out
+    xargs -a ${MACHINES} -I NODE -P0 sh -c 'ssh $1 find $2 -maxdepth 1 -name ${3}* -exec zgrep -h $4 {} \; > $5-$1'  -- NODE $log_path $log_file $key_words ${output_file}
     set +x
 
     echo -e "line:${LINENO} ${FUNCNAME[0]} - END"
 }
 
+if [ ! -s $MACHINES ]
+then
+    echo "error $MACHINES"
+    exit
+fi
 
 repo_history=${WORK_DIR}/repo_gc.reclaimed_history
-# cm-chunk-reclaim.log.20170701-013511.gz:2017-06-30T20:06:23,163 [TaskScheduler-ChunkManager-DEFAULT_BACKGROUND_OPERATION-ScheduledExecutor-234]  INFO  RepoReclaimer.java (line 649) successfully recycled repo 3a0a0535-5d00-47d5-a293-96cfb93a0c59
 
 search_logs cm-chunk-reclaim.log 1 "RepoReclaimer.*successfully.recycled.repo" ${repo_history}-
 #awk -F':' '{ print $2 }' ${repo_history}-* | sed -e 's/ /T/g' | sort | uniq -c > ${repo_history}
