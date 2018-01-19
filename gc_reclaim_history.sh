@@ -12,7 +12,7 @@ function search_logs
     local output_file=$4
     local log_path="/opt/emc/caspian/fabric/agent/services/object/main/log/"
     xargs -a ${MACHINES} -I NODE -P0 sh -c \
-           'ssh NODE "find $1 -maxdepth 1 -mtime -$2 -name \"$3\" -exec zgrep $4 {} \;" >${5}$$-NODE 2>/dev/null'\
+           'ssh NODE "find $1 -maxdepth 1 -mtime -$2 -name \"$3\" -exec zgrep $4 {} \;" >${5}-NODE 2>/dev/null'\
            -- $log_path $within_days $log_file $key_words $output_file
 
     echo -e "line:${LINENO} ${FUNCNAME[0]} - END"
@@ -21,8 +21,9 @@ function search_logs
 [ ! -s $MACHINES ] && echo "error $MACHINES" && exit
 
 repo_history=${WORK_DIR}/repo_gc.reclaimed_history
+rm -f ${repo_history}*
 
-#search_logs cm-chunk-reclaim.log 1 "RepoReclaimer.*successfully.recycled.repo" ${repo_history}-
+search_logs cm-chunk-reclaim.log 1 "RepoReclaimer.*successfully.recycled.repo" ${repo_history}-
 
 awk -F: '{
             count[$1]++
