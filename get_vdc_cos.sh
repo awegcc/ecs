@@ -1,4 +1,5 @@
-cos from ip
+#!/bin/sh
+#i get cos from ip
 
 if [[ $# < 1 ]]
 then
