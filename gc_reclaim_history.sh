@@ -6,7 +6,12 @@ MACHINES=MACHINES
 log_file='cm-chunk-reclaim.log'
 key_words='RepoReclaimer.*successfully.recycled.repo'
 
-while getopts ':f:k:ov' opt
+function print_usage()
+{
+    echo "usage"
+}
+
+while getopts ':f:k:o:m:d:t:v' opt
 do
     case $opt in
     f) log_file=$OPTARG
@@ -14,6 +19,12 @@ do
     k) key_words=$OPTARG
     ;;
     o) out_putfile=$OPTARG
+    ;;
+    o) within_days=$OPTARG
+    ;;
+    m) MACHINES=$OPTARG
+    ;;
+    d) WORK_DIR=$OPTARG
     ;;
     ?) echo '  error'
        print_usage
