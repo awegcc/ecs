@@ -3,6 +3,25 @@
 WORK_DIR=`pwd`
 MACHINES=MACHINES
 
+log_file='cm-chunk-reclaim.log'
+key_words='RepoReclaimer.*successfully.recycled.repo'
+
+while getopts ':f:k:ov' opt
+do
+    case $opt in
+    f) log_file=$OPTARG
+    ;;
+    k) key_words=$OPTARG
+    ;;
+    o) out_putfile=$OPTARG
+    ;;
+    ?) echo '  error'
+       print_usage
+    ;;
+    esac
+done
+
+
 function search_logs
 {
     echo -e "line:${LINENO} ${FUNCNAME[0]} - Start"
