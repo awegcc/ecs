@@ -24,18 +24,20 @@ xargs -a ${MACHINES} -I NODE -P0 sh -c \
 awk -F: '/ReclaimState.java/{
             count[$1]["btree"]++
          }
-         {
          /RepoReclaimer.java/{
             count[$1]["repo"]++
          } END{
-            printf("%-19s %-10s %-10s","time","btree_chunk","repo_chunk")
+            printf("%-14s  %21s  %21s  %21s  %21s\n","time","btreeCount(size)","repoCount(size)","btreeTotal(size)","repoTotal(size)")
             n=asorti(count,sorted)
             chunk_size=134217600/(1024*1024*1024)
             for(i=1;i<=n;i++){
                 btree_chunk_sum += count[sorted[i]]["btree"]
                 repo_chunk_sum += count[sorted[i]]["repo"]
-                printf("%s  %6d (%8.2f GB),  %5d (%7.2f GB)\n",\
-                       sorted[i],count[sorted[i]],count[sorted[i]]*chunk_size,chunk_sum,chunk_sum*chunk_size);
+                printf("%-14s  %8d(%7.2fGB)  %8d(%7.2fGB) %9d(%9.2f) %9d(%9.2f)\n",\
+                       sorted[i],count[sorted[i]]["btree"],count[sorted[i]]["btree"]*chunk_size,\
+                       count[sorted[i]]["repo"],count[sorted[i]]["repo"]*chunk_size,\
+                       btree_chunk_sum,btree_chunk_sum*chunk_size,\
+                       repo_chunk_sum,repo_chunk_sum*chunk_size);
             }
          }' ${output_file}-*
 
