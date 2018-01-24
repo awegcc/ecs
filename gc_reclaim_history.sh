@@ -1,22 +1,21 @@
 #!/bin/sh
 
 WORK_DIR=`pwd`
-MACHINES=MACHINES
+MACHINES=MACHINE
 
-log_file='cm-chunk-reclaim.log*'
 repo_keywords='RepoReclaimer.java*successfully.recycled.repo'
 btree_keywords='ReclaimState.java*Chunk.*reclaimed:true'
-
 log_path="/opt/emc/caspian/fabric/agent/services/object/main/log/"
+log_file='cm-chunk-reclaim.log*'
+within_days=1
 output_file=${WORK_DIR}/gc.reclaimed_history
-[ ! -s $MACHINES ] && echo "error $MACHINES" && exit
 
+[ ! -s $MACHINES ] && echo "error $MACHINES" && exit
 rm -f ${output_file}*
-log_path="/opt/emc/caspian/fabric/agent/services/object/main/log/"
 
 xargs -a ${MACHINES} -I NODE -P0 sh -c \
-           'ssh NODE "find $1 -maxdepth 1 -mtime -$2 -name \"$3\" -exec zgrep "$4" {} \;" >${5}-NODE 2>/dev/null'\
-           -- $log_path $within_days $log_file $key_words $output_file
+           'ssh NODE "find $1 -maxdepth 1 -mtime -$2 -name \"$3\" -exec zgrep \"$4\\|$5\" {} \;" >${6}-NODE 2>/dev/null'\
+           -- $log_path $within_days $log_file $repo_keywords $btree_keywords $output_file
 
 
 
