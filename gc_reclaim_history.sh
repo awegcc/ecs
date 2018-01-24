@@ -3,58 +3,25 @@
 WORK_DIR=`pwd`
 MACHINES=MACHINES
 
-log_file='cm-chunk-reclaim.log'
-key_words='RepoReclaimer.*successfully.recycled.repo'
+log_file='cm-chunk-reclaim.log*'
+repo_keywords='RepoReclaimer.java*successfully.recycled.repo'
+btree_keywords='ReclaimState.java*Chunk.*reclaimed:true'
 
-function print_usage()
-{
-    echo "usage"
-}
-
-while getopts ':f:k:o:m:d:t:v' opt
-do
-    case $opt in
-    f) log_file=$OPTARG
-    ;;
-    k) key_words=$OPTARG
-    ;;
-    o) out_putfile=$OPTARG
-    ;;
-    o) within_days=$OPTARG
-    ;;
-    m) MACHINES=$OPTARG
-    ;;
-    d) WORK_DIR=$OPTARG
-    ;;
-    ?) echo '  error'
-       print_usage
-    ;;
-    esac
-done
-
-
-function search_logs
-{
-    echo -e "line:${LINENO} ${FUNCNAME[0]} - Start"
-    local log_file=${1}*
-    local within_days=$2
-    local key_words="$3"
-    local output_file=$4
-    local log_path="/opt/emc/caspian/fabric/agent/services/object/main/log/"
-    xargs -a ${MACHINES} -I NODE -P0 sh -c \
-           'ssh NODE "find $1 -maxdepth 1 -mtime -$2 -name \"$3\" -exec zgrep $4 {} \;" >${5}-NODE 2>/dev/null'\
-           -- $log_path $within_days $log_file $key_words $output_file
-
-    echo -e "line:${LINENO} ${FUNCNAME[0]} - END"
-}
-
+log_path="/opt/emc/caspian/fabric/agent/services/object/main/log/"
+output_file=${WORK_DIR}/gc.reclaimed_history
 [ ! -s $MACHINES ] && echo "error $MACHINES" && exit
 
-repo_history=${WORK_DIR}/repo_gc.reclaimed_history
-rm -f ${repo_history}*
+rm -f ${output_file}*
+log_path="/opt/emc/caspian/fabric/agent/services/object/main/log/"
 
-search_logs cm-chunk-reclaim.log 1 "RepoReclaimer.*successfully.recycled.repo" ${repo_history}-
+xargs -a ${MACHINES} -I NODE -P0 sh -c \
+           'ssh NODE "find $1 -maxdepth 1 -mtime -$2 -name \"$3\" -exec zgrep "$4" {} \;" >${5}-NODE 2>/dev/null'\
+           -- $log_path $within_days $log_file $key_words $output_file
 
+
+
+# 2018-01-23T22:05:01,239 [TaskScheduler-ChunkManager-DEFAULT_BACKGROUND_OPERATION-ScheduledExecutor-173]  INFO  ReclaimState.java (line 45) Chunk f181057c-6fa3-4f4c-9612-3d7b438cd459 reclaimed:true
+# 2017-06-30T20:06:23,163 [TaskScheduler-ChunkManager-DEFAULT_BACKGROUND_OPERATION-ScheduledExecutor-234]  INFO  RepoReclaimer.java (line 649) successfully recycled repo 3a0a0535-5d00-47d5-a293-96cfb93a0c59
 awk -F: '{
             count[$1]++
          } END{
@@ -67,5 +34,5 @@ awk -F: '{
                        sorted[i],count[sorted[i]],count[sorted[i]]*chunk_size,chunk_sum,chunk_sum*chunk_size);
             }
             print "  * Size is estimated with maximum chunk size, actual reclaimed size could be smaller"
-         }' ${repo_history}-*
+         }' ${output_file}-*
 
