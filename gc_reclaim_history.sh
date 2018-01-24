@@ -3,8 +3,8 @@
 WORK_DIR=`pwd`
 MACHINES=MACHINE
 
-repo_keywords='RepoReclaimer.java*successfully.recycled.repo'
-btree_keywords='ReclaimState.java*Chunk.*reclaimed:true'
+repo_keywords='RepoReclaimer.*successfully.recycled.repo'
+btree_keywords='ReclaimState.*Chunk.*reclaimed:true'
 log_path="/opt/emc/caspian/fabric/agent/services/object/main/log/"
 log_file='cm-chunk-reclaim.log*'
 within_days=1
