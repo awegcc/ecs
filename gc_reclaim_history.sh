@@ -27,13 +27,14 @@ awk -F: '/ReclaimState.java/{
          /RepoReclaimer.java/{
             count[$1]["repo"]++
          } END{
-            printf("%-14s  %21s  %21s  %21s  %21s\n","time","btreeCount(size)","repoCount(size)","btreeTotal(size)","repoTotal(size)")
+            printf("%-14s  %21s  %21s  %21s  %21s\n","time",
+                   "btreeCount(size GB)","repoCount(size GB)","btreeTotal(size GB)","repoTotal(size GB)")
             n=asorti(count,sorted)
             chunk_size=134217600/(1024*1024*1024)
             for(i=1;i<=n;i++){
                 btree_chunk_sum += count[sorted[i]]["btree"]
                 repo_chunk_sum += count[sorted[i]]["repo"]
-                printf("%-14s  %8d(%7.2fGB)  %8d(%7.2fGB) %9d(%9.2f) %9d(%9.2f)\n",\
+                printf("%-14s  %8d(%7.2f)  %8d(%7.2f) %12d(%9.2f) %12d(%9.2f)\n",\
                        sorted[i],count[sorted[i]]["btree"],count[sorted[i]]["btree"]*chunk_size,\
                        count[sorted[i]]["repo"],count[sorted[i]]["repo"]*chunk_size,\
                        btree_chunk_sum,btree_chunk_sum*chunk_size,\
