@@ -21,17 +21,21 @@ xargs -a ${MACHINES} -I NODE -P0 sh -c \
 
 # 2018-01-23T22:05:01,239 [TaskScheduler-ChunkManager-DEFAULT_BACKGROUND_OPERATION-ScheduledExecutor-173]  INFO  ReclaimState.java (line 45) Chunk f181057c-6fa3-4f4c-9612-3d7b438cd459 reclaimed:true
 # 2017-06-30T20:06:23,163 [TaskScheduler-ChunkManager-DEFAULT_BACKGROUND_OPERATION-ScheduledExecutor-234]  INFO  RepoReclaimer.java (line 649) successfully recycled repo 3a0a0535-5d00-47d5-a293-96cfb93a0c59
-awk -F: '{
-            count[$1]++
+awk -F: '/ReclaimState.java/{
+            count[$1]["btree"]++
+         }
+         {
+         /RepoReclaimer.java/{
+            count[$1]["repo"]++
          } END{
-            printf("\033[1;34m%s\033[0m\n", "====> Repo GC Reclaim History")
+            printf("%-19s %-10s %-10s","time","btree_chunk","repo_chunk")
             n=asorti(count,sorted)
             chunk_size=134217600/(1024*1024*1024)
             for(i=1;i<=n;i++){
-                chunk_sum += count[sorted[i]]
-                printf("%s reclaimed %6d chunks(%8.2f GB), total reclaimed %5d chunks(%7.2f GB)\n",\
+                btree_chunk_sum += count[sorted[i]]["btree"]
+                repo_chunk_sum += count[sorted[i]]["repo"]
+                printf("%s  %6d (%8.2f GB),  %5d (%7.2f GB)\n",\
                        sorted[i],count[sorted[i]],count[sorted[i]]*chunk_size,chunk_sum,chunk_sum*chunk_size);
             }
-            print "  * Size is estimated with maximum chunk size, actual reclaimed size could be smaller"
          }' ${output_file}-*
 
