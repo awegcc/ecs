@@ -7,7 +7,7 @@ else
     ip_port="$1:9101"
 fi
 
-curl -s "http://${ip_port}:9101/diagnostic/SS/1/DumpAllKeys/SSTABLE_KEY?type=device&useStyle=raw" | grep -B1 schemaType > SS_device
+curl -s "http://${ip_port}/diagnostic/SS/1/DumpAllKeys/SSTABLE_KEY?type=device&useStyle=raw" | grep -B1 schemaType > SS_device
 # http://10.240.29.31:9101/urn:storageos:OwnershipInfo:79634a09-0dad-44be-bee1-7a5766947a43__SS_11_128_1:/SSTABLE_KEY/?type=device
 # schemaType SSTABLE_KEY type DEVICE device 10.240.29.36
 dos2unix -q SS_device
