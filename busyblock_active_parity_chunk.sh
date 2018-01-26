@@ -38,6 +38,7 @@ do
         pmap[$partitionId]=btree_journal_num
         printf "%-15s  %-37s  %-16s  %-9s\n" $device $partitionId $block_num $btree_journal_num
         grep -B1 'size: 134217600' ${partitionId}.busyblock | awk -F\" '/chunkId:/{print $2}' > ${partitionId}.chunkid
+        grep -B1 'size: 11184800' ${partitionId}.busyblock | awk -F\" '/chunkId:/{print $2}' > ${partitionId}.paritychunkid
     done 98< partition.id
 done 99< SS_device_partition
 
@@ -48,11 +49,18 @@ do
     echo $partition
     while read -u 96 chunkid
     do
-        if ! curl -s "http://${ip_port}/diagnostic/1/ShowChunkInfo?cos=$cos&chunkid=$chunkid" -o $partition/${chunkid}.info
+        chunkinfo="$partition/${chunkid}.info"
+        if ! curl -s "http://${ip_port}/diagnostic/1/ShowChunkInfo?cos=$cos&chunkid=$chunkid" -o $chunkinfo
         then
-            curl -s "http://${ip_port}/diagnostic/2/ShowChunkInfo?cos=$cos&chunkid=$chunkid" -o $partition/${chunkid}.info
+            curl -s "http://${ip_port}/diagnostic/2/ShowChunkInfo?cos=$cos&chunkid=$chunkid" -o $chunkinfo
         fi
-    done 96<${partition}.chunkid
+        if grep 'ACTIVE' $chunkinfo && grep "PARITY" $chunkinfo && grep "$partition" $chunkinfo
+        then
+            echo "$chunkid" >> ${partition}.active.parity.chunkid
+            #curl -X DELETE "http://$(hostname -i):9101/cm/recover/removeChunkInfo/$cos/1/$chunkid"
+        fi
+    done 96<${partition}.paritychunkid
+    
 done
 
 
