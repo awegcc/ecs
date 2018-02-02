@@ -47,6 +47,6 @@ awk -F: '/ReclaimState.java/{
                        sorted[i],count[sorted[i]]["btree"],count[sorted[i]]["btree"]*chunk_size,\
                        count[sorted[i]]["repo"],count[sorted[i]]["repo"]*chunk_size)
             }
-            printf("%-14s %12d(%12.2f ) %12d(%12.2f )\n","summary",btree_sum,btree_sum*chunk_size,repo_sum,repo_sum*chunk_size)
+            printf("%-14s %12d(%12.2f ) %12d(%12.2f )\n","total",btree_sum,btree_sum*chunk_size,repo_sum,repo_sum*chunk_size)
          }' ${output_file}-*
 
