@@ -24,7 +24,7 @@ then
 fi
 
 rm -f ${output_file}*
-echo "Collecting cm-chunk-reclaim.log..."
+echo "Collecting past 24 hours reclaimed chunks."
 
 xargs -a ${MACHINES} -I NODE -P0 sh -c \
            'ssh NODE "find $1 -maxdepth 1 -mtime -$2 -name \"$3\" -exec zgrep \"$4\\|$5\" {} \;" >${6}-NODE 2>/dev/null'\
@@ -37,7 +37,7 @@ awk -F: '/ReclaimState.java/{
          /RepoReclaimer.java/{
             count[$1]["repo"]++
          } END{
-            printf("%-14s %28s %28s\n","time","btreeChunks( total size GB )","repoChunks( total size GB )")
+            printf("%-15s %26s %27s\n","date-time","btreeChunks(total size GB)","repoChunks(total size GB)")
             n=asorti(count,sorted)
             chunk_size=134217600/(1024*1024*1024)
             for(i=1;i<=n;i++){
