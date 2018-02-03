@@ -49,7 +49,7 @@ function delete_btree()
 
     for version in `cat $BTREE_TO_REMOVE`
     do
-        version="$(echo -e "$version" | tr -d '\r\n')"
+        version="${version%'\r'}
         #echo remove btree $version
         echo "curl -v -X DELETE \"http://${HOST_IP}:9101/diagnostic/deletebtree/${DTID}/${ZONE}/$version\" "
     done > $TMP_FOLDER/btree_remove.${FILE_NAME}.sh
@@ -78,11 +78,9 @@ function delete_btree()
     VERSTION=${VERSTION##* }
     echo  "+++++ Set BPLUSTREE_PARSER_MARKER to bootstrap tree major + 1"
     # Note: btree major is bootstrap major + 1, occupancyProgress and version should be the same as backuped BPLUSTREE_PARSER_MARKER
-    MAJOR_NUM=$(echo $MAJOR | awk '{major_d=strtonum("0x"$1);printf("%0x", major_d)}')
-    MAJOR_ADD_1=$(echo $MAJOR | awk '{major_d=strtonum("0x"$1);majoradd=major_d+1; printf("%0x", majoradd)}')
-    MAJOR_ADD_1_S=${MAJOR/$MAJOR_NUM/$MAJOR_ADD_1}
+    MAJOR_ADD_1=$(awk -v n=$MAJOR 'BEGIN{printf("%016x\n",strtonum("0x"n)+1)}')
 
-    run_cmd "curl -I -X PUT" "http://${HOST_IP}:9101/gc/setBtreeMarker/BPLUSTREE_PARSER_MARKER/${DTID}/${ZONE}/$MAJOR_ADD_1_S/${OCC_PRO}/${VERSTION}/"
+    run_cmd "curl -I -X PUT" "http://${HOST_IP}:9101/gc/setBtreeMarker/BPLUSTREE_PARSER_MARKER/${DTID}/${ZONE}/$MAJOR_ADD_1/${OCC_PRO}/${VERSTION}/"
 
 
     echo "+++++ Cleanup GC_REF_COLLECTION Key for reverted btree"
