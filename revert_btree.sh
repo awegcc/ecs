@@ -90,11 +90,12 @@ function delete_btree()
 
     echo "+++++ Cleanup GC_REF_COLLECTION Key for reverted btree"
     CT_IDS=$TMP_FOLDER/ct_id.${FILE_NAME}
-    curl -Ls "http://$ip_port/diagnostic/CT/1/" | xmllint --format - | grep '<id>' | awk -F '<|>' '{print $3}' > $CT_IDS
+    curl -Ls "http://${ip_port}/diagnostic/CT/1/" | xmllint --format - | awk -F'[<>]' '/id/{print $3}' > $CT_IDS
+    gc_ref_url="http://${ip_port}/diagnostic/PR/1/DumpAllKeys/GC_REF_COLLECTION/"
     for ctId in `cat $CT_IDS`
     do
-       prId=$(curl -L -s "http://${ip_port}/diagnostic/PR/1/DumpAllKeys/GC_REF_COLLECTION/?type=BTREE&ctId=${ctId}&zone=${ZONE}&rgId=${rgId}&obId=${DTID}&useStyle=raw" | grep -B1 schema | grep http | awk -F '/' '{print $4}' | awk -F "PR_" '{print $2}' | awk -F "_128" '{print $1}')
-       echo "curl -L -X DELETE \"http://${ip_port}/diagnostic/deletegcrefcollectionkey/${prId}/BTREE/${ctId}/${ZONE}/${rgId}/${DTID}\" -v "
+       prId=$(curl -L -s "${gc_ref_url}?type=BTREE&ctId=${ctId}&zone=${ZONE}&rgId=${rgId}&obId=${DTID}&useStyle=raw"| grep -B1 schemaT | awk -F'_' '/http/{print $4}')
+       echo "curl -v -L -X DELETE \"http://${ip_port}/diagnostic/deletegcrefcollectionkey/${prId}/BTREE/${ctId}/${ZONE}/${rgId}/${DTID}\" "
     done > $TMP_FOLDER/clear_gc_ref.${FILE_NAME}.sh
 
     run_cmd bash $TMP_FOLDER/clear_gc_ref.${FILE_NAME}.sh
@@ -114,7 +115,7 @@ initialization
 while read PRID DTID
 do
     FILE_NAME=${PRID:66:-1}-${DTID:102:-1}-$(date +'%Y%m%d_%H%M')
-    rgId="urn:storageos:ReplicationGroupInfo:${DT_ID:65:36}:global"
+    rgId="urn:storageos:ReplicationGroupInfo:${DTID:65:36}:global"
     echo ""
     echo "******** start $DTID   ******"
     echo ""
