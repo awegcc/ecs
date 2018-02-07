@@ -18,6 +18,6 @@ then
 fi
 sh cleanupjob_command.sh > $cleanupjobs
 awk '/schemaType/{print $4" "strftime("%Y/%m/%d-%H:%M:%S",$4/1000)}' $cleanupjobs | sort -n | head -4
-echo "Datetime-now  $(date +'%Y/%m/%d-%H:%M:%S')"
+echo "current time  $(date +'%Y/%m/%d-%H:%M:%S')"
 
 
