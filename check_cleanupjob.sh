@@ -17,5 +17,7 @@ then
   done < obdt_url.list > cleanupjob_command.sh
 fi
 sh cleanupjob_command.sh > $cleanupjobs
-grep 'schemaType' $cleanupjobs | sort -k3 -n | head -4
+awk '/schemaType/{print $4" "strftime("%Y/%m/%d-%H:%M:%S",$4/1000)}' $cleanupjobs | sort -n | head -4
+echo "Datetime-now  $(date +'%Y/%m/%d-%H:%M:%S')"
+
 
