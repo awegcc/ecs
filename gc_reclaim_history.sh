@@ -1,35 +1,38 @@
 #!/bin/sh
-
+days=1
 WORK_DIR="`pwd`/reclaim"
-
-repo_keywords='RepoReclaimer.*successfully.recycled.repo'
-btree_keywords='ReclaimState.*Chunk.*reclaimed:true'
-log_path='/opt/emc/caspian/fabric/agent/services/object/main/log/'
 log_file='cm-chunk-reclaim.log*'
-within_days=1
 output_file=${WORK_DIR}/gc.reclaimed_history
+btree_keywords='ReclaimState.*Chunk.*reclaimed:true'
+repo_keywords='RepoReclaimer.*successfully.recycled.repo'
+log_path='/opt/emc/caspian/fabric/agent/services/object/main/log/'
 
-[ ! -d $WORK_DIR ] && mkdir $WORK_DIR
+while getopts ':h:d' opt
+do
+    case $opt in
+      h) ip_port="${OPTARG}:9101"
+      ;;
+      d) days="${OPTARG}"
+      ;;
+      ?) echo "Usage $0 -d days -h ip"
+         exit 1
+      ;;
+    esac
+done
+((${#ip_port}<12)) && ip_port=$(netstat -ntl | awk '/:9101/{print $4;exit}')
+[ -d $WORK_DIR ] && rm -f ${output_file}* || mkdir $WORK_DIR
 
-if [[ $# < 1 ]]
-then
-    ip_port=$(netstat -ntl | awk '/:9101/{print $4;exit}')
-else
-    ip_port="$1:9101"
-fi
 MACHINES=".${ip_port%:*}.ip"
 if [ ! -s $MACHINES ]
 then
     curl -s "http://${ip_port}/diagnostic/RT/0/" | xmllint --format - | awk -F'[<>]' '/owner_ipaddress/{ip[$3]++}END{for(k in ip)print k}' > $MACHINES
 fi
 
-rm -f ${output_file}*
-echo "Collecting past 24 hours reclaimed chunks."
+echo "Collecting past $days day reclaimed chunks."
 
 xargs -a ${MACHINES} -I NODE -P0 sh -c \
            'ssh NODE "find $1 -maxdepth 1 -mtime -$2 -name \"$3\" -exec zgrep \"$4\\|$5\" {} \;" >${6}-NODE 2>/dev/null'\
-           -- $log_path $within_days "$log_file" "$repo_keywords" "$btree_keywords" "$output_file"
-
+           -- $log_path $days "$log_file" "$repo_keywords" "$btree_keywords" "$output_file"
 
 awk -F: '/ReclaimState.java/{
             count[$1]["btree"]++

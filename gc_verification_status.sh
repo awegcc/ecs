@@ -5,7 +5,7 @@ then
     days=$1
 elif [[ $# == 0 ]]
 then
-    days=0
+    days=1
 else
     echo "Usage: $0 backward_days"
     exit 1
@@ -13,20 +13,29 @@ fi
 
 TYPE='REPO_SCAN'
 
-datelist='{'
-for((i=days;i>0;i--))
-do
-        day=$(date +'.%Y%m%d*,' -d"$i day ago")
-        datelist="$datelist$day"
-done
-datelist="${datelist}$(date +'.%Y%m%d*,}')"
 datenow=$(date '+%Y%m%d-%H%M')
 dump_data=${TYPE}_dump_data.$datenow
 result_file=${TYPE}_GC_Verification.${datenow}
 
+ip_port=$(netstat -ntl | awk '/:9101/{print $4;exit}')
+MACHINES=".${ip_port%:*}.ip"
+if [ ! -s $MACHINES ]
+then
+    curl -s "http://${ip_port}/diagnostic/RT/0/" | xmllint --format - | awk -F'[<>]' '/owner_ipaddress/{ip[$3]++}END{for(k in ip)print k}' > $MACHINES
+fi
+
 echo viprexec -c "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}"
 #viprexec "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
 viprexec "zgrep -h REPO_SCAN.*ChunkReferenceScanner.java /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
+log_path='/opt/emc/caspian/fabric/agent/services/object/main/log/'
+log_file='blobsvc-chunk-reclaim.log*'
+repo_keywords=''
+btree_keywords=''
+output_file=''
+
+xargs -a ${MACHINES} -I NODE -P0 sh -c \
+           'ssh NODE "find $1 -maxdepth 1 -mtime -$2 -name \"$3\" -exec zgrep \"$4\\|$5\" {} \;" >${6}-NODE 2>/dev/null'\
+           -- $log_path $days "$log_file" "$repo_keywords" "$btree_keywords" "$output_file"
 
 awk -v type=$TYPE '$2~type{
                   if($4=="ChunkReferenceScanner.java" && $7=="Saving") {

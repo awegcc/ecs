@@ -14,6 +14,12 @@ datenow=$(date '+%Y%m%d')
 dump_data=dump_data.${datenow}
 
 echo $datelist
+ip_port=$(netstat -ntl | awk '/:9101/{print $4;exit}')
+MACHINES=".${ip_port%:*}.ip"
+if [ ! -s $MACHINES ]
+then
+    curl -s "http://${ip_port}/diagnostic/RT/0/" | xmllint --format - | awk -F'[<>]' '/owner_ipaddress/{ip[$3]++}END{for(k in ip)print k}' > $MACHINES
+fi
 
 #2018-01-12T10:43:00,004 PERF 1515753780004 : DeleteJobScanner.processCleanupJob_local count 353 average 16598 us deviation 25131
 #2018-01-12T10:43:00,004 PERF 1515753780004 : DeleteJobScanner.processCleanupJob_remote count 254 average 3796 us deviation 5363
