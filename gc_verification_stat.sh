@@ -1,41 +1,45 @@
 #!/bin/bash
 #
-if [[ $# == 1 ]]
-then
-    days=$1
-elif [[ $# == 0 ]]
-then
-    days=1
-else
-    echo "Usage: $0 backward_days"
-    exit 1
-fi
-
+days=1
+WORK_DIR="`pwd`/verification"
+log_file='blobsvc-chunk-reclaim.log*'
+output_file=${WORK_DIR}/gc.verification
+btree_keywords='ReclaimState.*Chunk.*reclaimed:true'
+repo_keywords='RepoReclaimer.*successfully.recycled.repo'
+log_path='/opt/emc/caspian/fabric/agent/services/object/main/log/'
 TYPE='REPO_SCAN'
 
-datenow=$(date '+%Y%m%d-%H%M')
-dump_data=${TYPE}_dump_data.$datenow
-result_file=${TYPE}_GC_Verification.${datenow}
+while getopts ':h:d:br' opt
+do
+    case $opt in
+      h) ip_port="${OPTARG}:9101"
+      ;;
+      d) days="${OPTARG}"
+      ;;
+      b) TYPE='BPLUSTREE_SCAN'
+      ;;
+      r) TYPE='REPO_SCAN'
+      ;;
+      ?) echo "Usage $0 -d days -h ip"
+         exit 1
+      ;;
+    esac
+done
+((${#ip_port}<12)) && ip_port=$(netstat -ntl | awk '/:9101/{print $4;exit}')
+[ -d $WORK_DIR ] && rm -f ${output_file}* || mkdir $WORK_DIR
 
-ip_port=$(netstat -ntl | awk '/:9101/{print $4;exit}')
+result_file="${TYPE}-$(date '+%Y%m%d-%H%M')"
 MACHINES=".${ip_port%:*}.ip"
 if [ ! -s $MACHINES ]
 then
     curl -s "http://${ip_port}/diagnostic/RT/0/" | xmllint --format - | awk -F'[<>]' '/owner_ipaddress/{ip[$3]++}END{for(k in ip)print k}' > $MACHINES
 fi
 
-echo viprexec -c "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}"
-#viprexec "zgrep -h \"This\\|candidateCount\" /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
-viprexec "zgrep -h REPO_SCAN.*ChunkReferenceScanner.java /opt/emc/caspian/fabric/agent/services/object/main/log/blobsvc-chunk-reclaim.log${datelist}" > ${dump_data}
-log_path='/opt/emc/caspian/fabric/agent/services/object/main/log/'
-log_file='blobsvc-chunk-reclaim.log*'
-repo_keywords=''
-btree_keywords=''
-output_file=''
+echo "Counting past $days day verification log"
 
 xargs -a ${MACHINES} -I NODE -P0 sh -c \
-           'ssh NODE "find $1 -maxdepth 1 -mtime -$2 -name \"$3\" -exec zgrep \"$4\\|$5\" {} \;" >${6}-NODE 2>/dev/null'\
-           -- $log_path $days "$log_file" "$repo_keywords" "$btree_keywords" "$output_file"
+           'ssh NODE "find $1 -maxdepth 1 -mtime -$2 -name \"$3\" -exec zgrep ${4}.*ChunkReferenceScanner.java {} \;" >${5}-NODE 2>/dev/null'\
+           -- $log_path $days "$log_file" "$TYPE" "$output_file"
 
 awk -v type=$TYPE '$2~type{
                   if($4=="ChunkReferenceScanner.java" && $7=="Saving") {
@@ -80,7 +84,6 @@ awk -v type=$TYPE '$2~type{
                                                             array[sorted[i]]["milliseconds"]/3600000);
             if(substr(sorted[i],1,index(sorted[i],"_")) != substr(sorted[i+1],1,index(sorted[i+1],"_"))) print "";
         }
-    }' $dump_data | tee $result_file
+    }' ${output_file}* | tee $result_file
 
-rm -f $dump_data
 echo "Result saved in $result_file"

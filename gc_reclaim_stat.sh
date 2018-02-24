@@ -7,7 +7,7 @@ btree_keywords='ReclaimState.*Chunk.*reclaimed:true'
 repo_keywords='RepoReclaimer.*successfully.recycled.repo'
 log_path='/opt/emc/caspian/fabric/agent/services/object/main/log/'
 
-while getopts ':h:d' opt
+while getopts ':h:d:' opt
 do
     case $opt in
       h) ip_port="${OPTARG}:9101"
