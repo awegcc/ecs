@@ -3,9 +3,6 @@
 days=1
 WORK_DIR="`pwd`/verification"
 log_file='blobsvc-chunk-reclaim.log*'
-output_file=${WORK_DIR}/gc.verification
-btree_keywords='ReclaimState.*Chunk.*reclaimed:true'
-repo_keywords='RepoReclaimer.*successfully.recycled.repo'
 log_path='/opt/emc/caspian/fabric/agent/services/object/main/log/'
 TYPE='REPO_SCAN'
 
@@ -20,14 +17,15 @@ do
       ;;
       r) TYPE='REPO_SCAN'
       ;;
-      ?) echo "Usage $0 -d days -h ip"
+      ?) echo "Usage $0 -d days -h ip -b -r"
          exit 1
       ;;
     esac
 done
 ((${#ip_port}<12)) && ip_port=$(netstat -ntl | awk '/:9101/{print $4;exit}')
-[ -d $WORK_DIR ] && rm -f ${output_file}* || mkdir $WORK_DIR
 
+output_file=${WORK_DIR}/${TYPE}
+[ -d $WORK_DIR ] && rm -f ${output_file}* || mkdir $WORK_DIR
 result_file="${TYPE}-$(date '+%Y%m%d-%H%M')"
 MACHINES=".${ip_port%:*}.ip"
 if [ ! -s $MACHINES ]
@@ -35,7 +33,7 @@ then
     curl -s "http://${ip_port}/diagnostic/RT/0/" | xmllint --format - | awk -F'[<>]' '/owner_ipaddress/{ip[$3]++}END{for(k in ip)print k}' > $MACHINES
 fi
 
-echo "Counting past $days day verification log"
+echo "Collectting past $days day $TYPE log"
 
 xargs -a ${MACHINES} -I NODE -P0 sh -c \
            'ssh NODE "find $1 -maxdepth 1 -mtime -$2 -name \"$3\" -exec zgrep ${4}.*ChunkReferenceScanner.java {} \;" >${5}-NODE 2>/dev/null'\
@@ -56,15 +54,15 @@ awk -v type=$TYPE '$2~type{
                           }
                       }
                   }
-                  else if($4=="RepoChunkReferenceScanner.java" && ($7=="This" || $8=="This")) {
+                  else if($6~"_GC_VERIFICATION_TASK_END" || $7~"_GC_VERIFICATION_TASK_END") {
                       for(i=1;i<=NF;i++){
                           if($i~":OwnershipInfo:") {
                               dtid=substr($i,index($i,"_")+1)
                               dtid=substr(dtid,1,index(dtid,":")-7)
                           } else if($i=="milliseconds") {
                               array[dtid][$i]=$(i-1);
-                          } else if($i=="objectScanCount:") {
-                              array[dtid][$i]=$(i+1);
+                          } else if($i~"objectScanCount") {
+                              array[dtid]["objectScanCount"]=$(i+1);
                           }
                       }
                       array[dtid]["lastEndtime"]=substr($1,index($1,"T")-5,14)
@@ -75,7 +73,7 @@ awk -v type=$TYPE '$2~type{
         n=asorti(array,sorted)
         for(i=1; i<=n; i++) {
             printf("%-43s %15s %14d %14s %13s %14s %12s %.2f\n",sorted[i],\
-                                                            array[sorted[i]]["objectScanCount:"],\
+                                                            array[sorted[i]]["objectScanCount"],\
                                                             array[sorted[i]]["candidateCount"],\
                                                             array[sorted[i]]["failedCandidateCount"],\
                                                             array[sorted[i]]["lastTaskTime"],\
