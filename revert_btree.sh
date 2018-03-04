@@ -1,5 +1,7 @@
 #!/bin/sh
 #
+# input PR OB
+#
 WORK_FOLDER="$(pwd)"
 PR_OB_LIST="$WORK_FOLDER/PR_OB.list"
 BACKUP_FOLDER="$WORK_FOLDER/backup_info"

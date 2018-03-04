@@ -17,7 +17,6 @@ then
   done < obdt_url.list > cleanupjob_command.sh
 fi
 sh cleanupjob_command.sh > $cleanupjobs
-awk '/schemaType/{print $4" "strftime("%Y/%m/%d-%H:%M:%S",$4/1000)}' $cleanupjobs | sort -n | head -4
-echo "current time  $(date +'%Y/%m/%d-%H:%M:%S')"
-
+awk '/schemaType/{printf("%s %s delay:%dday\n",$4,strftime("%Y/%m/%d-%H:%M:%S",$4/1000),(systime()-$4/1000)/86400)}' $cleanupjobs | sort -k1 -n
+echo "current-time  $(date +'%Y/%m/%d-%H:%M:%S')"
 
