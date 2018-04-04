@@ -3,7 +3,8 @@ days=1
 WORK_DIR="`pwd`/reclaim"
 log_file='cm-chunk-reclaim.log*'
 output_file=${WORK_DIR}/gc.reclaimed_history
-btree_keywords='ReclaimState.*Chunk.*reclaimed:true'
+#btree_keywords='ReclaimState.*Chunk.*reclaimed:true'
+btree_keywords='Running.state.RECLAIM'
 repo_keywords='RepoReclaimer.*successfully.recycled.repo'
 log_path='/opt/emc/caspian/fabric/agent/services/object/main/log/'
 
