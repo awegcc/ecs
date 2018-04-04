@@ -29,7 +29,7 @@ then
     curl -s "http://${ip_port}/diagnostic/RT/0/" | xmllint --format - | awk -F'[<>]' '/owner_ipaddress/{ip[$3]++}END{for(k in ip)print k}' > $MACHINES
 fi
 
-echo "Counting past $days day(s) reclaimed chunks."
+echo "Counting past $days day(s) reclaimed chunks and size( chunks #*128M )"
 
 xargs -a ${MACHINES} -I NODE -P0 sh -c \
            'ssh NODE "find $1 -maxdepth 1 -mtime -$2 -name \"$3\" -exec zgrep \"$4\\|$5\" {} \;" >${6}-NODE 2>/dev/null'\
